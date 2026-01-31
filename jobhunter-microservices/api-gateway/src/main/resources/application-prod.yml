@@ -1,0 +1,38 @@
+# Production Profile Configuration for API Gateway
+spring:
+    config:
+        activate:
+            on-profile: prod
+
+# CORS Configuration for Production
+# Set via environment variable: SPRING_CLOUD_GATEWAY_GLOBALCORS_CORS_CONFIGURATIONS_[/**]_ALLOWEDORIGINS=https://yourdomain.com,https://www.yourdomain.com
+spring:
+    cloud:
+        gateway:
+            globalcors:
+                cors-configurations:
+                    '[/**]':
+                        allowedOrigins: ${ALLOWED_ORIGINS:https://yourdomain.com}
+                        allowedMethods:
+                            - GET
+                            - POST
+                            - PUT
+                            - DELETE
+                            - PATCH
+                            - OPTIONS
+                        allowedHeaders: "*"
+                        allowCredentials: true
+                        maxAge: 3600
+
+# Springdoc OpenAPI - Disabled in Production for Security
+# If you need Swagger in production, protect it with authentication
+springdoc:
+    api-docs:
+        enabled: false
+    swagger-ui:
+        enabled: false
+
+logging:
+    level:
+        org.springframework.cloud.gateway: INFO
+        vn.hoidanit: INFO

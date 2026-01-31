@@ -1,0 +1,22 @@
+# Production Profile Configuration
+spring:
+    config:
+        activate:
+            on-profile: prod
+
+# CORS Configuration for Production
+# Set this via environment variable: APP_CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+app:
+    cors:
+        allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:https://yourdomain.com}
+
+# Springdoc OpenAPI - Disabled in Production for Security
+springdoc:
+    api-docs:
+        enabled: false
+    swagger-ui:
+        enabled: false
+
+logging:
+    level:
+        vn.hoidanit: INFO

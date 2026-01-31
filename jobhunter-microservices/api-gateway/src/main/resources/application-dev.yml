@@ -1,0 +1,65 @@
+# Development Profile Configuration for API Gateway
+spring:
+    config:
+        activate:
+            on-profile: dev
+
+# CORS Configuration for Development
+# Allow multiple origins for local development
+spring:
+    cloud:
+        gateway:
+            globalcors:
+                cors-configurations:
+                    '[/**]':
+                        allowedOrigins:
+                            - "http://localhost:3000"
+                            - "http://localhost:4173"
+                            - "http://localhost:5173"
+                            - "http://localhost:8080"
+                            - "http://localhost:8081"
+                            - "http://localhost:8082"
+                            - "http://localhost:8083"
+                            - "http://localhost:8084"
+                            - "http://localhost:8085"
+                        allowedMethods:
+                            - GET
+                            - POST
+                            - PUT
+                            - DELETE
+                            - PATCH
+                            - OPTIONS
+                        allowedHeaders: "*"
+                        allowCredentials: true
+                        maxAge: 3600
+
+# Springdoc OpenAPI - Enabled in Development
+springdoc:
+    api-docs:
+        path: /v3/api-docs
+        enabled: true
+    swagger-ui:
+        path: /swagger-ui.html
+        enabled: true
+        try-it-out-enabled: true
+        operations-sorter: method
+        tags-sorter: alpha
+        urls:
+            - name: API Gateway
+              url: /v3/api-docs
+            - name: Auth Service
+              url: /auth-service/v3/api-docs
+            - name: Company Service
+              url: /company-service/v3/api-docs
+            - name: Job Service
+              url: /job-service/v3/api-docs
+            - name: Resume Service
+              url: /resume-service/v3/api-docs
+            - name: File Service
+              url: /file-service/v3/api-docs
+    show-actuator: true
+
+logging:
+    level:
+        org.springframework.cloud.gateway: DEBUG
+        vn.hoidanit: DEBUG
