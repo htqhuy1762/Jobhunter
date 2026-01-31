@@ -189,3 +189,28 @@ hoidanit:
   jwt:
     base64-secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
 
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    urls:
+      - name: API Gateway
+        url: /v3/api-docs
+      - name: Auth Service
+        url: http://localhost:8081/v3/api-docs
+      - name: Company Service
+        url: http://localhost:8082/v3/api-docs
+      - name: Job Service
+        url: http://localhost:8083/v3/api-docs
+      - name: Resume Service
+        url: http://localhost:8084/v3/api-docs
+      - name: File Service
+        url: http://localhost:8085/v3/api-docs
+  show-actuator: true

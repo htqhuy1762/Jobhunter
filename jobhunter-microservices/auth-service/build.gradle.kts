@@ -54,6 +54,9 @@ dependencies {
     implementation("org.springframework.security:spring-security-oauth2-resource-server")
     implementation("org.springframework.security:spring-security-oauth2-jose")
 
+    // API Documentation
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+
     // Monitoring
     implementation("io.micrometer:micrometer-registry-prometheus")
     // Zipkin tracing

@@ -55,6 +55,9 @@ dependencies {
     // Spring Filter
     implementation("com.turkraft.springfilter:jpa:3.1.7")
 
+    // API Documentation
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+
     // Monitoring
     implementation("io.micrometer:micrometer-registry-prometheus")
     // Zipkin tracing

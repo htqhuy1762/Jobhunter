@@ -32,6 +32,9 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
+    // API Documentation
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+
     // Monitoring
     implementation("io.micrometer:micrometer-registry-prometheus")
     // Zipkin tracing

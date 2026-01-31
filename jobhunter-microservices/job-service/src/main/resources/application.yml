@@ -143,3 +143,15 @@ resilience4j:
         timeoutDuration: 10s  # Increase to allow retries: 1s + 2s + 4s + overhead = ~8s
         cancelRunningFuture: true
 
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: true

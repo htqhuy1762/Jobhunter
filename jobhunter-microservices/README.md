@@ -21,6 +21,7 @@ Hệ thống JobHunter là RESTful API được xây dựng bằng Spring Boot, 
 -  Resilience Patterns - Circuit Breaker, Retry, Fallback  
 -  Object Storage - MinIO
 -  Monitoring - Actuator + Prometheus + Zipkin
+-  API Documentation - Swagger/OpenAPI 3.0
 
 ---
 
@@ -116,11 +117,14 @@ docker-compose logs -f
 |---------|-----|-------------|
 | **Eureka** | http://localhost:8761 | - |
 | **API Gateway** | http://localhost:8080 | - |
+| **Swagger UI** | http://localhost:8080/swagger-ui.html | - |
 | **Zipkin** | http://localhost:9411 | - |
 | **MinIO** | http://localhost:9001 | minioadmin/minioadmin |
 | **Grafana** | http://localhost:3000 | admin/admin |
 | **Prometheus** | http://localhost:9090 | - |
 | **Kafka UI** | http://localhost:8090 | - |
+
+> 📚 **API Documentation**: Xem [SWAGGER_GUIDE.md](./SWAGGER_GUIDE.md) để biết chi tiết cách sử dụng Swagger UI
 
 ### 4. Dừng
 

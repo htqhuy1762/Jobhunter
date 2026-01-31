@@ -43,6 +43,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
 
+    // API Documentation - WebFlux version for reactive gateway
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0")
+
     // Monitoring
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")

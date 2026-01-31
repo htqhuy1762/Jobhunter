@@ -130,3 +130,15 @@ resilience4j:
         maxConcurrentCalls: 25
         maxWaitDuration: 0ms
 
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: true
