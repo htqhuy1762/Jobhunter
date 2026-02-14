@@ -1,158 +1,163 @@
 server:
-  port: 8084
+    port: 8084
 
 spring:
-  application:
-    name: resume-service
+    application:
+        name: resume-service
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://jobhunter-mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    datasource:
+        url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://jobhunter-postgres:5432/jobhunter}
+        username: ${SPRING_DATASOURCE_USERNAME:postgres}
+        password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
 
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
+    jpa:
+        hibernate:
+            ddl-auto: none
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
+                dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: 1
-      retries: 3
+    kafka:
+        bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+            acks: 1
+            retries: 3
 
 # Gateway Security - MUST match with API Gateway secret
 gateway:
-  signature:
-    secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
-    enabled: true
+    signature:
+        secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
+        enabled: true
 
 eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://eureka-server:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-  instance:
-    prefer-ip-address: true
+    client:
+        serviceUrl:
+            defaultZone: http://eureka-server:8761/eureka/
+        register-with-eureka: true
+        fetch-registry: true
+    instance:
+        prefer-ip-address: true
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
-  endpoint:
+    endpoints:
+        web:
+            exposure:
+                include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
+    endpoint:
+        health:
+            show-details: always
     health:
-      show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-  zipkin:
+        circuitbreakers:
+            enabled: true
+    metrics:
+        export:
+            prometheus:
+                enabled: true
+    zipkin:
+        tracing:
+            endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
     tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
-  tracing:
-    sampling:
-      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+        sampling:
+            probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
 
 logging:
-  level:
-    root: INFO
-    vn.hoidanit.resumeservice: DEBUG
-  file:
-    name: logs/resume-service.log
+    level:
+        root: INFO
+        vn.hoidanit.resumeservice: DEBUG
+    file:
+        name: logs/resume-service.log
 
 # Feign Client Configuration
 feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: basic
-  circuitbreaker:
-    enabled: false  # Disable Feign circuit breaker, use Resilience4j annotations instead
+    client:
+        config:
+            default:
+                connectTimeout: 5000
+                readTimeout: 5000
+                loggerLevel: basic
+    circuitbreaker:
+        enabled: false # Disable Feign circuit breaker, use Resilience4j annotations instead
 
 # Resilience4j Circuit Breaker Configuration
 resilience4j:
-  circuitbreaker:
-    instances:
-      jobService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
-        eventConsumerBufferSize: 10
-        recordExceptions:
-          - feign.FeignException
-          - feign.RetryableException
-          - java.net.ConnectException
-          - java.io.IOException
-      userService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
-        eventConsumerBufferSize: 10
-        recordExceptions:
-          - feign.FeignException
-          - feign.RetryableException
-          - java.net.ConnectException
-          - java.io.IOException
-  retry:
-    instances:
-      jobService:
-        maxAttempts: 3
-        waitDuration: 1s
-        enableExponentialBackoff: true
-        exponentialBackoffMultiplier: 2
-        retryExceptions:
-          - feign.FeignException
-          - feign.RetryableException
-          - java.net.ConnectException
-          - java.io.IOException
-      userService:
-        maxAttempts: 3
-        waitDuration: 1s
-        enableExponentialBackoff: true
-        exponentialBackoffMultiplier: 2
-        retryExceptions:
-          - feign.FeignException
-          - feign.RetryableException
-          - java.net.ConnectException
-          - java.io.IOException
-  timelimiter:
-    instances:
-      jobService:
-        timeoutDuration: 3s
-      userService:
-        timeoutDuration: 3s
+    circuitbreaker:
+        instances:
+            jobService:
+                registerHealthIndicator: true
+                slidingWindowSize: 10
+                minimumNumberOfCalls: 5
+                permittedNumberOfCallsInHalfOpenState: 3
+                automaticTransitionFromOpenToHalfOpenEnabled: true
+                waitDurationInOpenState: 5s
+                failureRateThreshold: 50
+                eventConsumerBufferSize: 10
+                recordExceptions:
+                    - feign.FeignException
+                    - feign.RetryableException
+                    - java.net.ConnectException
+                    - java.io.IOException
+            userService:
+                registerHealthIndicator: true
+                slidingWindowSize: 10
+                minimumNumberOfCalls: 5
+                permittedNumberOfCallsInHalfOpenState: 3
+                automaticTransitionFromOpenToHalfOpenEnabled: true
+                waitDurationInOpenState: 5s
+                failureRateThreshold: 50
+                eventConsumerBufferSize: 10
+                recordExceptions:
+                    - feign.FeignException
+                    - feign.RetryableException
+                    - java.net.ConnectException
+                    - java.io.IOException
+    retry:
+        instances:
+            jobService:
+                maxAttempts: 3
+                waitDuration: 1s
+                enableExponentialBackoff: true
+                exponentialBackoffMultiplier: 2
+                retryExceptions:
+                    - feign.FeignException
+                    - feign.RetryableException
+                    - java.net.ConnectException
+                    - java.io.IOException
+            userService:
+                maxAttempts: 3
+                waitDuration: 1s
+                enableExponentialBackoff: true
+                exponentialBackoffMultiplier: 2
+                retryExceptions:
+                    - feign.FeignException
+                    - feign.RetryableException
+                    - java.net.ConnectException
+                    - java.io.IOException
+    timelimiter:
+        instances:
+            jobService:
+                timeoutDuration: 3s
+            userService:
+                timeoutDuration: 3s
+
+# CORS Configuration
+app:
+    cors:
+        allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4173,http://localhost:5173}
 
 # Springdoc OpenAPI Configuration
 springdoc:
-  api-docs:
-    path: /v3/api-docs
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    try-it-out-enabled: true
-    operations-sorter: method
-    tags-sorter: alpha
-  show-actuator: true
+    api-docs:
+        path: /v3/api-docs
+        enabled: true
+    swagger-ui:
+        path: /swagger-ui.html
+        enabled: true
+        try-it-out-enabled: true
+        operations-sorter: method
+        tags-sorter: alpha
+    show-actuator: true

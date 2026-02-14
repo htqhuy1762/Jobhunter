@@ -48,7 +48,7 @@ dependencies {
     implementation("com.turkraft.springfilter:jpa:3.1.7")
 
     // Database
-    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("org.postgresql:postgresql")
 
     // JWT - Spring Security OAuth2 (includes Nimbus)
     implementation("org.springframework.security:spring-security-oauth2-resource-server")

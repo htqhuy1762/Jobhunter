@@ -1,109 +1,113 @@
 server:
-  port: 8086
+    port: 8086
 
 spring:
-  application:
-    name: notification-service
+    application:
+        name: notification-service
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:your-email@gmail.com}
-    password: ${MAIL_PASSWORD:your-password}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: ${MAIL_USERNAME:your-email@gmail.com}
+        password: ${MAIL_PASSWORD:your-password}
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
 
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    consumer:
-      group-id: notification-service
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-        spring.json.type.mapping: emailMessage:vn.hoidanit.notificationservice.dto.EmailMessage
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        spring.json.add.type.headers: false
+    kafka:
+        bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+        consumer:
+            group-id: notification-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: '*'
+                spring.json.type.mapping: emailMessage:vn.hoidanit.notificationservice.dto.EmailMessage
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+            properties:
+                spring.json.add.type.headers: false
 
 # Gateway Security - MUST match with API Gateway secret
 gateway:
-  signature:
-    secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
-    enabled: true
+    signature:
+        secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
+        enabled: true
 
 eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://eureka-server:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-  instance:
-    prefer-ip-address: true
+    client:
+        serviceUrl:
+            defaultZone: http://eureka-server:8761/eureka/
+        register-with-eureka: true
+        fetch-registry: true
+    instance:
+        prefer-ip-address: true
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
-  endpoint:
+    endpoints:
+        web:
+            exposure:
+                include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
+    endpoint:
+        health:
+            show-details: always
     health:
-      show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-  zipkin:
+        circuitbreakers:
+            enabled: true
+    metrics:
+        export:
+            prometheus:
+                enabled: true
+    zipkin:
+        tracing:
+            endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
     tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
-  tracing:
-    sampling:
-      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+        sampling:
+            probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
 
 logging:
-  level:
-    root: INFO
-    vn.hoidanit.notificationservice: DEBUG
-  file:
-    name: logs/notification-service.log
+    level:
+        root: INFO
+        vn.hoidanit.notificationservice: DEBUG
+    file:
+        name: logs/notification-service.log
 
 # Resilience4j Configuration
 resilience4j:
-  circuitbreaker:
-    instances:
-      emailService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
-        waitDurationInOpenState: 10s
-        failureRateThreshold: 50
+    circuitbreaker:
+        instances:
+            emailService:
+                registerHealthIndicator: true
+                slidingWindowSize: 10
+                minimumNumberOfCalls: 5
+                permittedNumberOfCallsInHalfOpenState: 3
+                waitDurationInOpenState: 10s
+                failureRateThreshold: 50
 
-  retry:
-    instances:
-      emailService:
-        maxAttempts: 3
-        waitDuration: 2s
-        enableExponentialBackoff: true
+    retry:
+        instances:
+            emailService:
+                maxAttempts: 3
+                waitDuration: 2s
+                enableExponentialBackoff: true
 
-  ratelimiter:
-    instances:
-      sendEmail:
-        limitForPeriod: 10
-        limitRefreshPeriod: 1s
-        timeoutDuration: 0s
-      createSubscriber:
-        limitForPeriod: 5
-        limitRefreshPeriod: 1s
-        timeoutDuration: 0s
+    ratelimiter:
+        instances:
+            sendEmail:
+                limitForPeriod: 10
+                limitRefreshPeriod: 1s
+                timeoutDuration: 0s
+            createSubscriber:
+                limitForPeriod: 5
+                limitRefreshPeriod: 1s
+                timeoutDuration: 0s
 
+# CORS Configuration
+app:
+    cors:
+        allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4173,http://localhost:5173}

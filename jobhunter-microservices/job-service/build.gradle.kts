@@ -39,7 +39,7 @@ dependencies {
     // Kafka for event-driven architecture
     implementation("org.springframework.kafka:spring-kafka")
 
-    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("org.postgresql:postgresql")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 

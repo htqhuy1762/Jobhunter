@@ -39,22 +39,24 @@ public class DatabaseSeeder {
      * Only runs in 'dev', 'test', and 'docker' profiles
      */
     @Bean
-    @Profile({"dev", "test", "docker"})
+    @Profile({ "dev", "test", "docker" })
     public CommandLineRunner seedData() {
         return args -> {
             log.info("JOB SERVICE - Starting database seeding...");
 
-            // Check if data already exists
-            if (skillRepository.count() > 0 || jobRepository.count() > 0) {
-                log.info("Skills/Jobs already exist, skipping seeding");
-                return;
+            // Check and create skills if not exists
+            if (skillRepository.count() > 0) {
+                log.info("Skills already exist, skipping skill seeding");
+            } else {
+                createSkills();
             }
 
-            // Create skills first
-            createSkills();
-
-            // Create sample jobs
-            createJobs();
+            // Check and create jobs if not exists
+            if (jobRepository.count() > 0) {
+                log.info("Jobs already exist, skipping job seeding");
+            } else {
+                createJobs();
+            }
 
             log.info("JOB SERVICE - Database seeding completed successfully!");
         };
@@ -64,10 +66,10 @@ public class DatabaseSeeder {
         log.info("--- Creating Skills ---");
 
         String[] skillNames = {
-            "Java", "Spring Boot", "MySQL", "PostgreSQL", "MongoDB",
-            "Redis", "Docker", "Kubernetes", "AWS", "React",
-            "Angular", "Vue.js", "Node.js", "Python", "JavaScript",
-            "TypeScript", "Microservices", "REST API", "GraphQL", "Git"
+                "Java", "Spring Boot", "MySQL", "PostgreSQL", "MongoDB",
+                "Redis", "Docker", "Kubernetes", "AWS", "React",
+                "Angular", "Vue.js", "Node.js", "Python", "JavaScript",
+                "TypeScript", "Microservices", "REST API", "GraphQL", "Git"
         };
 
         for (String skillName : skillNames) {
@@ -89,104 +91,96 @@ public class DatabaseSeeder {
 
         // Job 1: Backend Developer
         createJobIfNotExists(
-            "Backend Developer",
-            LocationEnum.HANOI,
-            2000.00,
-            5,
-            LevelEnum.JUNIOR,
-            "Looking for talented Java Spring Boot developers to join our growing team. You will work on building scalable microservices and RESTful APIs.",
-            1L,
-            Arrays.asList("Java", "Spring Boot", "MySQL", "Docker")
-        );
+                "Backend Developer",
+                LocationEnum.HANOI,
+                2000.00,
+                5,
+                LevelEnum.JUNIOR,
+                "Looking for talented Java Spring Boot developers to join our growing team. You will work on building scalable microservices and RESTful APIs.",
+                1L,
+                Arrays.asList("Java", "Spring Boot", "MySQL", "Docker"));
 
         // Job 2: Frontend Developer
         createJobIfNotExists(
-            "Frontend Developer",
-            LocationEnum.HOCHIMINH,
-            1800.00,
-            3,
-            LevelEnum.MIDDLE,
-            "Seeking React developer with strong JavaScript skills. You will create modern, responsive web applications.",
-            2L,
-            Arrays.asList("React", "JavaScript", "TypeScript", "REST API")
-        );
+                "Frontend Developer",
+                LocationEnum.HOCHIMINH,
+                1800.00,
+                3,
+                LevelEnum.MIDDLE,
+                "Seeking React developer with strong JavaScript skills. You will create modern, responsive web applications.",
+                2L,
+                Arrays.asList("React", "JavaScript", "TypeScript", "REST API"));
 
         // Job 3: Full Stack Developer
         createJobIfNotExists(
-            "Full Stack Developer",
-            LocationEnum.DANANG,
-            2500.00,
-            2,
-            LevelEnum.SENIOR,
-            "Full stack developer with expertise in both Java backend and React frontend. Lead technical decisions and mentor junior developers.",
-            3L,
-            Arrays.asList("Java", "Spring Boot", "React", "MySQL", "Docker", "Microservices")
-        );
+                "Full Stack Developer",
+                LocationEnum.DANANG,
+                2500.00,
+                2,
+                LevelEnum.SENIOR,
+                "Full stack developer with expertise in both Java backend and React frontend. Lead technical decisions and mentor junior developers.",
+                3L,
+                Arrays.asList("Java", "Spring Boot", "React", "MySQL", "Docker", "Microservices"));
 
         // Job 4: DevOps Engineer
         createJobIfNotExists(
-            "DevOps Engineer",
-            LocationEnum.HANOI,
-            2800.00,
-            2,
-            LevelEnum.SENIOR,
-            "Experience with Docker, Kubernetes, and AWS required. Build and maintain CI/CD pipelines and cloud infrastructure.",
-            1L,
-            Arrays.asList("Docker", "Kubernetes", "AWS", "Git", "MySQL")
-        );
+                "DevOps Engineer",
+                LocationEnum.HANOI,
+                2800.00,
+                2,
+                LevelEnum.SENIOR,
+                "Experience with Docker, Kubernetes, and AWS required. Build and maintain CI/CD pipelines and cloud infrastructure.",
+                1L,
+                Arrays.asList("Docker", "Kubernetes", "AWS", "Git", "MySQL"));
 
         // Job 5: Mobile Developer
         createJobIfNotExists(
-            "Mobile Developer",
-            LocationEnum.HOCHIMINH,
-            2200.00,
-            4,
-            LevelEnum.MIDDLE,
-            "iOS/Android development using modern frameworks. Create engaging mobile experiences for millions of users.",
-            4L,
-            Arrays.asList("React", "JavaScript", "TypeScript", "REST API")
-        );
+                "Mobile Developer",
+                LocationEnum.HOCHIMINH,
+                2200.00,
+                4,
+                LevelEnum.MIDDLE,
+                "iOS/Android development using modern frameworks. Create engaging mobile experiences for millions of users.",
+                4L,
+                Arrays.asList("React", "JavaScript", "TypeScript", "REST API"));
 
         // Job 6: Python Developer
         createJobIfNotExists(
-            "Python Developer",
-            LocationEnum.HANOI,
-            2100.00,
-            3,
-            LevelEnum.MIDDLE,
-            "Python developer for data processing and API development. Work with Django/Flask and integrate with various databases.",
-            5L,
-            Arrays.asList("Python", "PostgreSQL", "MongoDB", "REST API", "Docker")
-        );
+                "Python Developer",
+                LocationEnum.HANOI,
+                2100.00,
+                3,
+                LevelEnum.MIDDLE,
+                "Python developer for data processing and API development. Work with Django/Flask and integrate with various databases.",
+                5L,
+                Arrays.asList("Python", "PostgreSQL", "MongoDB", "REST API", "Docker"));
 
         // Job 7: Cloud Architect
         createJobIfNotExists(
-            "Cloud Architect",
-            LocationEnum.HOCHIMINH,
-            3500.00,
-            1,
-            LevelEnum.SENIOR,
-            "Design and implement cloud-native solutions on AWS. Lead migration projects and optimize cloud infrastructure costs.",
-            1L,
-            Arrays.asList("AWS", "Docker", "Kubernetes", "Microservices", "PostgreSQL")
-        );
+                "Cloud Architect",
+                LocationEnum.HOCHIMINH,
+                3500.00,
+                1,
+                LevelEnum.SENIOR,
+                "Design and implement cloud-native solutions on AWS. Lead migration projects and optimize cloud infrastructure costs.",
+                1L,
+                Arrays.asList("AWS", "Docker", "Kubernetes", "Microservices", "PostgreSQL"));
 
         // Job 8: Angular Developer
         createJobIfNotExists(
-            "Angular Developer",
-            LocationEnum.DANANG,
-            1900.00,
-            3,
-            LevelEnum.MIDDLE,
-            "Build enterprise applications using Angular framework. Strong understanding of TypeScript and RxJS required.",
-            3L,
-            Arrays.asList("Angular", "TypeScript", "JavaScript", "REST API")
-        );
+                "Angular Developer",
+                LocationEnum.DANANG,
+                1900.00,
+                3,
+                LevelEnum.MIDDLE,
+                "Build enterprise applications using Angular framework. Strong understanding of TypeScript and RxJS required.",
+                3L,
+                Arrays.asList("Angular", "TypeScript", "JavaScript", "REST API"));
     }
 
     private void createJobIfNotExists(String name, LocationEnum location, double salary, int quantity,
-                                      LevelEnum level, String description, Long companyId,
-                                      List<String> skillNames) {
+            LevelEnum level, String description, Long companyId,
+            List<String> skillNames) {
         try {
             // Check if job already exists by name
             boolean exists = jobRepository.findAll().stream()
@@ -195,7 +189,7 @@ public class DatabaseSeeder {
             if (!exists) {
                 Job job = new Job();
                 job.setName(name);
-                job.setLocation(location);  // Now LocationEnum
+                job.setLocation(location); // Now LocationEnum
                 job.setSalary(salary);
                 job.setQuantity(quantity);
                 job.setLevel(level);
@@ -228,4 +222,3 @@ public class DatabaseSeeder {
         }
     }
 }
-

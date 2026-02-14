@@ -42,7 +42,7 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-bulkhead:2.1.0")
 
     // Database
-    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("org.postgresql:postgresql")
 
     // Redis & Cache
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
