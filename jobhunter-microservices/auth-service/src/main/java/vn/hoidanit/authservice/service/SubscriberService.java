@@ -83,14 +83,16 @@ public class SubscriberService {
                 .orElseThrow(() -> new RuntimeException("User not logged in"));
 
         Subscriber subscriber = subscriberRepository.findByEmailWithSkills(email)
-                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+                .orElseThrow(() -> new vn.hoidanit.authservice.exception.ResourceNotFoundException("Subscription",
+                        "email", email));
 
         return mapToDTO(subscriber);
     }
 
     public ResSubscriberDTO getSubscriberById(Long id) {
         Subscriber subscriber = subscriberRepository.findByIdWithSkills(id)
-                .orElseThrow(() -> new RuntimeException("Subscriber not found"));
+                .orElseThrow(
+                        () -> new vn.hoidanit.authservice.exception.ResourceNotFoundException("Subscriber", "id", id));
 
         return mapToDTO(subscriber);
     }
@@ -98,7 +100,7 @@ public class SubscriberService {
     @Transactional
     public void deleteSubscriber(Long id) {
         if (!subscriberRepository.existsById(id)) {
-            throw new RuntimeException("Subscriber not found");
+            throw new vn.hoidanit.authservice.exception.ResourceNotFoundException("Subscriber", "id", id);
         }
         subscriberRepository.deleteById(id);
         log.info("Deleted subscriber: id={}", id);
@@ -127,4 +129,3 @@ public class SubscriberService {
         return dto;
     }
 }
-

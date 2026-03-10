@@ -14,6 +14,12 @@ import vn.hoidanit.authservice.domain.response.RestResponse;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<RestResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        log.error("Resource not found: ", ex);
+        return RestResponse.error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
         log.error("Exception: ", ex);
@@ -39,4 +45,3 @@ public class GlobalExceptionHandler {
         return RestResponse.error(HttpStatus.NOT_FOUND, "Resource not found");
     }
 }
-

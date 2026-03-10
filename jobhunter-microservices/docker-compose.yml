@@ -267,8 +267,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      zipkin:
-        condition: service_healthy
     networks:
       - microservices-network
     environment:
@@ -276,8 +274,6 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
 
   # Auth Service
   auth-service:
@@ -296,8 +292,6 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
-      zipkin:
-        condition: service_healthy
     networks:
       - microservices-network
     environment:
@@ -309,8 +303,6 @@ services:
       - SPRING_DATA_REDIS_PORT=6379
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
 
   # Company Service
   company-service:
@@ -327,8 +319,6 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
-      zipkin:
-        condition: service_healthy
     networks:
       - microservices-network
     environment:
@@ -339,8 +329,6 @@ services:
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
 
   # Job Service
   job-service:
@@ -359,8 +347,6 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
-      zipkin:
-        condition: service_healthy
     networks:
       - microservices-network
     environment:
@@ -372,8 +358,6 @@ services:
       - SPRING_DATA_REDIS_PORT=6379
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
 
   # Resume Service
   resume-service:
@@ -392,8 +376,6 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
-      zipkin:
-        condition: service_healthy
     networks:
       - microservices-network
     environment:
@@ -407,8 +389,6 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET_NAME=jobhunter-files
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
 
   # File Service
   file-service:
@@ -423,8 +403,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      zipkin:
-        condition: service_healthy
     networks:
       - microservices-network
     volumes:
@@ -436,8 +414,6 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET_NAME=jobhunter-files
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
 
   # Notification Service
   notification-service:
@@ -452,18 +428,14 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      zipkin:
-        condition: service_healthy
     networks:
       - microservices-network
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
 
 networks:
   microservices-network:
