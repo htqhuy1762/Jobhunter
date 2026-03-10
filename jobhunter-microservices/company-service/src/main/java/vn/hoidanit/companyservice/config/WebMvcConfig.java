@@ -6,27 +6,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import vn.hoidanit.companyservice.interceptor.RoleCheckInterceptor;
 import vn.hoidanit.companyservice.resolver.CustomPageableResolver;
 
 /**
- * Web MVC Configuration to register interceptors and argument resolvers
+ * Web MVC Configuration to register argument resolvers
+ * Note: Authorization is now handled by Spring Security @PreAuthorize
  */
 @Configuration
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
-
-    private final RoleCheckInterceptor roleCheckInterceptor;
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        // Role-based access control
-        registry.addInterceptor(roleCheckInterceptor)
-                .addPathPatterns("/api/v1/**")
-                .excludePathPatterns("/actuator/**");
-    }
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {

@@ -17,7 +17,12 @@ extra["springCloudVersion"] = "2023.0.1"
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+
+    // JWT - Spring Security OAuth2
+    implementation("org.springframework.security:spring-security-oauth2-resource-server")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
 
     // MinIO for object storage
     implementation("io.minio:minio:8.5.7")
@@ -42,6 +47,7 @@ dependencies {
     implementation("io.zipkin.reporter2:zipkin-reporter-brave")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 dependencyManagement {

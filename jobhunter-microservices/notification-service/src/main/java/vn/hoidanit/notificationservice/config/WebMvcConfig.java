@@ -1,27 +1,11 @@
 package vn.hoidanit.notificationservice.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import vn.hoidanit.notificationservice.interceptor.RoleCheckInterceptor;
 
 @Configuration
-@RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
-
-    private final RoleCheckInterceptor roleCheckInterceptor;
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        // Role-based access control for all API endpoints
-        // Note: POST /api/v1/subscribers is excluded in Gateway config for public
-        // access
-        registry.addInterceptor(roleCheckInterceptor)
-                .addPathPatterns("/api/v1/**")
-                .excludePathPatterns("/actuator/**");
-    }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {

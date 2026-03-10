@@ -1,65 +1,74 @@
 package vn.hoidanit.notificationservice.util;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 import java.util.Optional;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
-import jakarta.servlet.http.HttpServletRequest;
-
+/**
+ * Utility class to extract user information from Spring Security Context
+ * JWT is verified by each service independently
+ */
 @Slf4j
 public class SecurityUtil {
 
-    private static final String HEADER_USER_ID = "X-User-Id";
-    private static final String HEADER_USER_EMAIL = "X-User-Email";
-    private static final String HEADER_USER_ROLES = "X-User-Roles";
+    public static final String AUTHORITIES_KEY = "permission";
+    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS256;
 
     private SecurityUtil() {
         throw new UnsupportedOperationException("Utility class");
     }
 
     public static Optional<String> getCurrentUserLogin() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String userEmail = request.getHeader(HEADER_USER_EMAIL);
-                return Optional.ofNullable(userEmail);
-            }
-        } catch (Exception e) {
-            log.warn("Could not get current user login: {}", e.getMessage());
-        }
-        return Optional.empty();
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));
     }
 
     public static Optional<String> getCurrentUserId() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String userId = request.getHeader(HEADER_USER_ID);
-                return Optional.ofNullable(userId);
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            Object userId = jwt.getClaim("userId");
+            if (userId != null) {
+                return Optional.of(String.valueOf(userId));
             }
-        } catch (Exception e) {
-            log.warn("Could not get current user ID: {}", e.getMessage());
         }
         return Optional.empty();
     }
 
     public static Optional<String> getCurrentUserRoles() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String roles = request.getHeader(HEADER_USER_ROLES);
-                return Optional.ofNullable(roles);
-            }
-        } catch (Exception e) {
-            log.warn("Could not get current user roles: {}", e.getMessage());
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+
+        if (authentication == null) {
+            return Optional.empty();
         }
-        return Optional.empty();
+
+        String roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .reduce((a, b) -> a + "," + b)
+                .orElse("");
+
+        return Optional.of(roles);
+    }
+
+    private static String extractPrincipal(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        } else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {
+            return springSecurityUser.getUsername();
+        } else if (authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getSubject();
+        } else if (authentication.getPrincipal() instanceof String s) {
+            return s;
+        }
+        return null;
     }
 }
-
-

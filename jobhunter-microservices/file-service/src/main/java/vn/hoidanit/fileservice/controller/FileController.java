@@ -18,8 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import vn.hoidanit.fileservice.annotation.RateLimit;
-import vn.hoidanit.fileservice.annotation.RequireRole;
 import vn.hoidanit.fileservice.domain.response.RestResponse;
 import vn.hoidanit.fileservice.service.FileService;
 
@@ -33,7 +33,7 @@ public class FileController {
 
     @PostMapping("/files")
     @RateLimit(name = "uploadFile")
-    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResUploadFileDTO>> uploadFile(
             @RequestParam(name = "file", required = false) MultipartFile file,
             @RequestParam("folder") String folder) throws Exception {
@@ -56,7 +56,7 @@ public class FileController {
 
     @GetMapping("/files")
     @RateLimit(name = "downloadFile")
-    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<Resource> download(
             @RequestParam(name = "fileName", required = false) String fileName,
             @RequestParam(name = "folder", required = false) String folder) throws Exception {
@@ -88,7 +88,8 @@ public class FileController {
     public ResponseEntity<Resource> serveFile(
             @PathVariable("folder") String folder,
             @PathVariable("filename") String filename,
-            @RequestParam(value = "download", required = false, defaultValue = "false") boolean forceDownload) throws Exception {
+            @RequestParam(value = "download", required = false, defaultValue = "false") boolean forceDownload)
+            throws Exception {
 
         long fileLength = this.fileService.getFileSize(filename, folder);
         if (fileLength == 0) {
@@ -126,7 +127,6 @@ public class FileController {
         return "application/octet-stream";
     }
 
-    public static record ResUploadFileDTO(String fileName, Instant uploadedAt) {}
+    public static record ResUploadFileDTO(String fileName, Instant uploadedAt) {
+    }
 }
-
-

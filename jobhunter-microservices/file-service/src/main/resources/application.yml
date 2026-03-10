@@ -25,6 +25,11 @@ gateway:
         secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
         enabled: true
 
+# JWT Configuration - MUST match with auth-service
+hoidanit:
+    jwt:
+        base64-secret: ${HOIDANIT_JWT_SECRET:L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS}
+
 eureka:
     client:
         serviceUrl:

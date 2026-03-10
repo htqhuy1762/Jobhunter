@@ -6,8 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import vn.hoidanit.resumeservice.util.SecurityUtil;
 import vn.hoidanit.resumeservice.util.SignatureUtil;
+
+import java.util.stream.Collectors;
 
 @Configuration
 @Slf4j
@@ -21,19 +26,26 @@ public class FeignConfig {
         return new RequestInterceptor() {
             @Override
             public void apply(RequestTemplate template) {
-                // Get current user information from request headers (set by Gateway)
+                // Get current user information from Spring Security Context
                 Long userId = SecurityUtil.getCurrentUserId();
                 String userEmail = SecurityUtil.getCurrentUserEmail();
-                String roles = SecurityUtil.getCurrentUserRoles();
+
+                // Extract roles from Spring Security Authentication
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                String roles = null;
+                if (authentication != null && authentication.getAuthorities() != null) {
+                    roles = authentication.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .collect(Collectors.joining(","));
+                }
 
                 if (userId != null && userEmail != null) {
                     // Generate Gateway signature for inter-service communication
                     long timestamp = System.currentTimeMillis();
                     String signatureData = SignatureUtil.createSignatureData(
-                        String.valueOf(userId),
-                        userEmail,
-                        timestamp
-                    );
+                            String.valueOf(userId),
+                            userEmail,
+                            timestamp);
                     String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
                     // Add headers
@@ -47,9 +59,10 @@ public class FeignConfig {
                     }
 
                     log.debug("Added Gateway signature headers to Feign request: {} {} for user: {}",
-                        template.method(), template.url(), userEmail);
+                            template.method(), template.url(), userEmail);
                 } else {
-                    log.warn("No user information found in request headers for Feign request. This may be a system call.");
+                    log.warn(
+                            "No user information found in request headers for Feign request. This may be a system call.");
 
                     // For system calls without user context, use system credentials
                     long timestamp = System.currentTimeMillis();
@@ -65,4 +78,3 @@ public class FeignConfig {
         };
     }
 }
-

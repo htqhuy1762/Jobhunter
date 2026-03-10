@@ -29,9 +29,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-security")
 
     // Spring Cloud
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+
+    // JWT - Spring Security OAuth2 (includes Nimbus)
+    implementation("org.springframework.security:spring-security-oauth2-resource-server")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
 
     // Resilience4j for Circuit Breaker, Rate Limiter, Retry
     implementation("org.springframework.boot:spring-boot-starter-aop")
@@ -66,6 +71,7 @@ dependencies {
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 dependencyManagement {

@@ -79,10 +79,12 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                         .flatMap(isBlacklisted -> {
                             if (Boolean.TRUE.equals(isBlacklisted)) {
                                 log.warn("Blacklisted token attempt for user: {}", email);
-                                return onError(exchange, "Token has been revoked. Please login again.", HttpStatus.UNAUTHORIZED);
+                                return onError(exchange, "Token has been revoked. Please login again.",
+                                        HttpStatus.UNAUTHORIZED);
                             }
 
-                            ServerHttpRequest modifiedRequest = buildAuthenticatedRequest(request, userId, email, roles);
+                            ServerHttpRequest modifiedRequest = buildAuthenticatedRequest(request, userId, email,
+                                    roles);
                             log.debug("JWT validated for user: {} (roles: {})", email, roles);
 
                             return chain.filter(exchange.mutate().request(modifiedRequest).build());
@@ -126,17 +128,22 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
         return "";
     }
 
-    private ServerHttpRequest buildAuthenticatedRequest(ServerHttpRequest request, String userId, String email, String roles) {
+    private ServerHttpRequest buildAuthenticatedRequest(ServerHttpRequest request, String userId, String email,
+            String roles) {
         long timestamp = System.currentTimeMillis();
         String signatureData = SignatureUtil.createSignatureData(userId, email, timestamp);
         String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
+        // Pass through the original Authorization header for downstream JWT validation
+        // Also add user headers for backward compatibility and additional context
         return request.mutate()
                 .header(HEADER_USER_ID, userId)
                 .header(HEADER_USER_EMAIL, email)
                 .header(HEADER_USER_ROLES, roles)
                 .header(HEADER_GATEWAY_SIGNATURE, signature)
                 .header(HEADER_GATEWAY_TIMESTAMP, String.valueOf(timestamp))
+                // NOTE: Authorization header is automatically passed through by Spring Cloud
+                // Gateway
                 .build();
     }
 
@@ -151,4 +158,3 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public static class Config {
     }
 }
-

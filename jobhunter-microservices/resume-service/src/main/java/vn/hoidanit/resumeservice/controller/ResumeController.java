@@ -19,8 +19,8 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import vn.hoidanit.resumeservice.annotation.PageableDefault;
-import vn.hoidanit.resumeservice.annotation.RequireRole;
 import vn.hoidanit.resumeservice.domain.Resume;
 import vn.hoidanit.resumeservice.domain.response.RestResponse;
 import vn.hoidanit.resumeservice.dto.ReqCreateResumeDTO;
@@ -37,7 +37,7 @@ public class ResumeController {
     private final ResumeService resumeService;
 
     @PostMapping("/resumes")
-    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResCreateResumeDTO>> create(@Valid @RequestBody ReqCreateResumeDTO reqDto) {
         // Convert DTO to entity
         Resume resume = new Resume();
@@ -49,9 +49,9 @@ public class ResumeController {
 
         // Check if user and job exist
         boolean isValid = this.resumeService.checkResumeExistByUserAndJob(resume);
-        if(!isValid) {
+        if (!isValid) {
             return RestResponse.error(HttpStatus.BAD_REQUEST,
-                "Invalid user or job. Please check userId and jobId.");
+                    "Invalid user or job. Please check userId and jobId.");
         }
 
         // Create resume
@@ -60,11 +60,11 @@ public class ResumeController {
     }
 
     @PutMapping("/resumes")
-    @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResUpdateResumeDTO>> update(@RequestBody Resume resume) {
         // check id exists
         Optional<Resume> resumeOptional = this.resumeService.fetchById(resume.getId());
-        if(resumeOptional.isEmpty()) {
+        if (resumeOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
@@ -76,10 +76,10 @@ public class ResumeController {
     }
 
     @DeleteMapping("/resumes/{id}")
-    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Optional<Resume> resumeOptional = this.resumeService.fetchById(id);
-        if(resumeOptional.isEmpty()) {
+        if (resumeOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
@@ -87,16 +87,14 @@ public class ResumeController {
 
         // Data-level authorization: USER can only delete their own resumes
         Long currentUserId = vn.hoidanit.resumeservice.util.SecurityUtil.getCurrentUserId();
-        String currentUserRoles = vn.hoidanit.resumeservice.util.SecurityUtil.getCurrentUserRoles();
-
-        boolean isHrOrAdmin = currentUserRoles != null &&
-            (currentUserRoles.contains("ROLE_HR") || currentUserRoles.contains("ROLE_ADMIN"));
+        boolean isHrOrAdmin = vn.hoidanit.resumeservice.util.SecurityUtil.hasRole("ROLE_HR") ||
+                vn.hoidanit.resumeservice.util.SecurityUtil.hasRole("ROLE_ADMIN");
 
         boolean isOwner = currentUserId != null && currentUserId.equals(resume.getUserId());
 
         if (!isHrOrAdmin && !isOwner) {
             return RestResponse.error(org.springframework.http.HttpStatus.FORBIDDEN,
-                "You don't have permission to delete this resume");
+                    "You don't have permission to delete this resume");
         }
 
         this.resumeService.delete(id);
@@ -104,10 +102,10 @@ public class ResumeController {
     }
 
     @GetMapping("/resumes/{id}")
-    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResFetchResumeDTO>> fetchById(@PathVariable("id") long id) {
         Optional<Resume> resumeOptional = this.resumeService.fetchById(id);
-        if(resumeOptional.isEmpty()) {
+        if (resumeOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
@@ -115,16 +113,14 @@ public class ResumeController {
 
         // Data-level authorization: USER can only view their own resumes
         Long currentUserId = vn.hoidanit.resumeservice.util.SecurityUtil.getCurrentUserId();
-        String currentUserRoles = vn.hoidanit.resumeservice.util.SecurityUtil.getCurrentUserRoles();
-
-        boolean isHrOrAdmin = currentUserRoles != null &&
-            (currentUserRoles.contains("ROLE_HR") || currentUserRoles.contains("ROLE_ADMIN"));
+        boolean isHrOrAdmin = vn.hoidanit.resumeservice.util.SecurityUtil.hasRole("ROLE_HR") ||
+                vn.hoidanit.resumeservice.util.SecurityUtil.hasRole("ROLE_ADMIN");
 
         boolean isOwner = currentUserId != null && currentUserId.equals(resume.getUserId());
 
         if (!isHrOrAdmin && !isOwner) {
             return RestResponse.error(org.springframework.http.HttpStatus.FORBIDDEN,
-                "You don't have permission to view this resume");
+                    "You don't have permission to view this resume");
         }
 
         ResFetchResumeDTO resumeDTO = this.resumeService.getResume(resume);
@@ -132,7 +128,7 @@ public class ResumeController {
     }
 
     @GetMapping("/resumes")
-    @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResultPaginationDTO>> fetchAll(
             @Filter Specification<Resume> spec,
             @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
@@ -142,7 +138,7 @@ public class ResumeController {
     }
 
     @GetMapping("/resumes/by-user")
-    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResultPaginationDTO>> fetchByUser(
             @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
 
@@ -150,4 +146,3 @@ public class ResumeController {
         return RestResponse.ok(result, "Fetch resumes by user successfully");
     }
 }
-

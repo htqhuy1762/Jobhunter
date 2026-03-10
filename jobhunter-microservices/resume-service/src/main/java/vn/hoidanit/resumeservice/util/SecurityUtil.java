@@ -1,120 +1,95 @@
 package vn.hoidanit.resumeservice.util;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.Optional;
 
 /**
- * Utility class to extract user information from request headers
- * Headers are set by API Gateway after JWT validation
+ * Utility class to extract user information from Spring Security Context
+ * JWT is verified by each service independently
  */
 @Slf4j
 public class SecurityUtil {
 
-    private static final String HEADER_USER_ID = "X-User-Id";
-    private static final String HEADER_USER_EMAIL = "X-User-Email";
-    private static final String HEADER_USER_ROLES = "X-User-Roles";
+    public static final String AUTHORITIES_KEY = "permission";
+    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS256;
 
     private SecurityUtil() {
         throw new UnsupportedOperationException("Utility class");
     }
 
-    /**
-     * Get current HTTP request
-     */
-    private static Optional<HttpServletRequest> getCurrentRequest() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            return Optional.ofNullable(attributes).map(ServletRequestAttributes::getRequest);
-        } catch (Exception e) {
-            log.warn("Could not get current request: {}", e.getMessage());
-            return Optional.empty();
-        }
+    public static Optional<String> getCurrentUserLogin() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));
     }
 
-    /**
-     * Get current user ID from request header (set by API Gateway)
-     * @return User ID or null if not found
-     */
-    public static Long getCurrentUserId() {
-        return getCurrentRequest()
-                .map(request -> request.getHeader(HEADER_USER_ID))
-                .map(userId -> {
-                    try {
-                        return Long.parseLong(userId);
-                    } catch (NumberFormatException e) {
-                        log.error("Invalid user ID format: {}", userId);
-                        return null;
-                    }
-                })
-                .orElse(null);
-    }
-
-    /**
-     * Get current user email from request header (set by API Gateway)
-     * @return User email or null if not found
-     */
     public static String getCurrentUserEmail() {
-        return getCurrentRequest()
-                .map(request -> request.getHeader(HEADER_USER_EMAIL))
-                .orElse(null);
+        return getCurrentUserLogin().orElse("anonymous");
     }
 
-    /**
-     * Get current user roles from request header (set by API Gateway)
-     * @return User roles (comma-separated) or null if not found
-     */
-    public static String getCurrentUserRoles() {
-        return getCurrentRequest()
-                .map(request -> request.getHeader(HEADER_USER_ROLES))
-                .orElse(null);
+    public static String getCurrentUserInfo() {
+        return getCurrentUserEmail();
     }
 
-    /**
-     * Check if current user has a specific role
-     * @param role Role name to check
-     * @return true if user has the role, false otherwise
-     */
+    public static Long getCurrentUserId() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            Object userId = jwt.getClaim("userId");
+            if (userId instanceof Integer) {
+                return ((Integer) userId).longValue();
+            } else if (userId instanceof Long) {
+                return (Long) userId;
+            }
+        }
+        return null;
+    }
+
     public static boolean hasRole(String role) {
-        String roles = getCurrentUserRoles();
-        if (roles == null || roles.isEmpty()) {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+
+        if (authentication == null) {
             return false;
         }
-        return roles.contains(role);
+
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals(role));
     }
 
-    /**
-     * Check if current user is authenticated (has user ID)
-     * @return true if authenticated, false otherwise
-     */
     public static boolean isAuthenticated() {
-        return getCurrentUserId() != null;
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+        return authentication != null && authentication.isAuthenticated();
     }
 
-    /**
-     * Get current user login (email) - for compatibility with JPA @PrePersist/@PreUpdate
-     * @return Optional containing user email
-     */
-    public static Optional<String> getCurrentUserLogin() {
-        return Optional.ofNullable(getCurrentUserEmail());
+    public static Optional<String> getCurrentUserJWT() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional
+                .ofNullable(securityContext.getAuthentication())
+                .filter(authentication -> authentication.getCredentials() instanceof String)
+                .map(authentication -> (String) authentication.getCredentials());
     }
 
-    /**
-     * Get current user info for logging
-     * @return String with user info
-     */
-    public static String getCurrentUserInfo() {
-        Long userId = getCurrentUserId();
-        String email = getCurrentUserEmail();
-        String roles = getCurrentUserRoles();
-
-        if (userId == null) {
-            return "Anonymous User";
+    private static String extractPrincipal(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        } else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {
+            return springSecurityUser.getUsername();
+        } else if (authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getSubject();
+        } else if (authentication.getPrincipal() instanceof String s) {
+            return s;
         }
-
-        return String.format("User[id=%d, email=%s, roles=%s]", userId, email, roles);
+        return null;
     }
 }
