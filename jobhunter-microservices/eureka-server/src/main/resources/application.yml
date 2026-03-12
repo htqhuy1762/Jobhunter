@@ -37,3 +37,5 @@ logging:
     root: INFO
     com.netflix.eureka: DEBUG
     com.netflix.discovery: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%15.15t] %-40.40logger{39} : %m%n'

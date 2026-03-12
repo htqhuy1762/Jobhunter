@@ -73,6 +73,9 @@ logging:
     level:
         root: INFO
         vn.hoidanit.authservice: DEBUG
+    pattern:
+        console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%15.15t] %-40.40logger{39} : %m%n'
+        file: '%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%15.15t] %-40.40logger{39} : %m%n'
     file:
         name: logs/auth-service.log
 
