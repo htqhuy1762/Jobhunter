@@ -94,23 +94,20 @@ hoidanit:
         cookie-secure: false # Set to true in production (HTTPS), false for local development (HTTP)
 
 # Resilience4j Configuration for Rate Limiting
+# Only protect sensitive operations: login/register (high risk for brute force attacks)
 resilience4j:
     ratelimiter:
         instances:
             login:
-                limitForPeriod: 5
+                limitForPeriod: 5           # Prevent brute force
                 limitRefreshPeriod: 1m
                 timeoutDuration: 0s
             register:
-                limitForPeriod: 3
+                limitForPeriod: 3           # Prevent spam signup
                 limitRefreshPeriod: 1m
                 timeoutDuration: 0s
-            createUser:
-                limitForPeriod: 10
-                limitRefreshPeriod: 1m
-                timeoutDuration: 0s
-            report:
-                limitForPeriod: 20
+            changePassword:
+                limitForPeriod: 5           # Sensitive operation, prevent abuse
                 limitRefreshPeriod: 1m
                 timeoutDuration: 0s
 

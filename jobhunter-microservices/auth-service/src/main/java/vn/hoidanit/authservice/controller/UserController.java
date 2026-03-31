@@ -28,7 +28,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @RateLimit(name = "createUser")
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResCreateUserDTO>> createNewUser(@Valid @RequestBody User user) {

@@ -107,11 +107,7 @@ resilience4j:
     ratelimiter:
         instances:
             sendEmail:
-                limitForPeriod: 10
-                limitRefreshPeriod: 1s
-                timeoutDuration: 0s
-            createSubscriber:
-                limitForPeriod: 5
+                limitForPeriod: 10          # Expensive operation, prevent abuse
                 limitRefreshPeriod: 1s
                 timeoutDuration: 0s
 

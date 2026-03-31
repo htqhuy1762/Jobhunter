@@ -98,11 +98,15 @@ resilience4j:
     ratelimiter:
         instances:
             uploadFile:
-                limitForPeriod: 20
+                limitForPeriod: 20          # Expensive operation, prevent resource exhaustion
                 limitRefreshPeriod: 1s
                 timeoutDuration: 0s
             downloadFile:
-                limitForPeriod: 50
+                limitForPeriod: 50          # Expensive operation, prevent resource exhaustion
+                limitRefreshPeriod: 1s
+                timeoutDuration: 0s
+            serveFile:
+                limitForPeriod: 100         # Serve static files, moderate limit
                 limitRefreshPeriod: 1s
                 timeoutDuration: 0s
 
