@@ -163,6 +163,7 @@ public class AuthController {
                 .body(response);
     }
 
+    @RateLimit(name = "register")
     @PostMapping("/register")
     public ResponseEntity<RestResponse<ResLoginDTO>> register(@Valid @RequestBody User user) {
         log.info("Register attempt for email: {}", user.getEmail());
@@ -273,8 +274,8 @@ public class AuthController {
 
     private void verifyOldPassword(String email, String oldPassword) {
         try {
-            UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(email, oldPassword);
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email,
+                    oldPassword);
             authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         } catch (Exception e) {
             log.error("Change password failed: Old password incorrect for user {}", email);
@@ -282,4 +283,3 @@ public class AuthController {
         }
     }
 }
-
