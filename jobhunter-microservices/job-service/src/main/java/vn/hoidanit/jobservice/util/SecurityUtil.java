@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -61,6 +62,20 @@ public class SecurityUtil {
     public static Long getCurrentUserId() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = securityContext.getAuthentication();
+
+        if (authentication != null && authentication.getDetails() instanceof Map<?, ?> details) {
+            Object userId = details.get("userId");
+            if (userId instanceof String s) {
+                try {
+                    return Long.parseLong(s);
+                } catch (NumberFormatException ignored) {
+                }
+            } else if (userId instanceof Integer) {
+                return ((Integer) userId).longValue();
+            } else if (userId instanceof Long) {
+                return (Long) userId;
+            }
+        }
 
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
             Object userId = jwt.getClaim("userId");

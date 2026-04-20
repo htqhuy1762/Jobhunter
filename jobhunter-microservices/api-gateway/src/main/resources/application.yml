@@ -116,7 +116,17 @@ spring:
                   filters:
                       - JwtAuthenticationFilter
 
-                # Job Service - Public (GET only)
+                # Job Service - GET with Authorization header (inject user context)
+                - id: job-service-get-authenticated
+                  uri: lb://job-service
+                  predicates:
+                      - Path=/api/v1/jobs/**,/api/v1/skills/**
+                      - Method=GET
+                      - Header=Authorization, Bearer .*
+                  filters:
+                      - JwtAuthenticationFilter
+
+                # Job Service - Public (GET only, no auth header)
                 - id: job-service-public
                   uri: lb://job-service
                   predicates:

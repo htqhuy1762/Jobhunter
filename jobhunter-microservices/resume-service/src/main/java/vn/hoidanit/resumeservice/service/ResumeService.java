@@ -1,7 +1,10 @@
 package vn.hoidanit.resumeservice.service;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -22,6 +25,7 @@ import vn.hoidanit.resumeservice.dto.UserDTO;
 import vn.hoidanit.resumeservice.kafka.producer.ResumeEventProducer;
 import vn.hoidanit.resumeservice.repository.ResumeRepository;
 import vn.hoidanit.resumeservice.util.SecurityUtil;
+import vn.hoidanit.resumeservice.util.constant.ResumeStateEnum;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,35 @@ public class ResumeService {
     private final UserFetchService userFetchService;
     private final JobFetchService jobFetchService;
     private final ResumeEventProducer resumeEventProducer;
+
+    private static final Map<ResumeStateEnum, Set<ResumeStateEnum>> VALID_TRANSITIONS = Map.of(
+            ResumeStateEnum.PENDING,
+            Set.of(ResumeStateEnum.REVIEWING, ResumeStateEnum.REJECTED, ResumeStateEnum.WITHDRAWN),
+            ResumeStateEnum.REVIEWING,
+            Set.of(ResumeStateEnum.SHORTLISTED, ResumeStateEnum.APPROVED, ResumeStateEnum.REJECTED,
+                    ResumeStateEnum.WITHDRAWN),
+            ResumeStateEnum.SHORTLISTED,
+            Set.of(ResumeStateEnum.INTERVIEW_SCHEDULED, ResumeStateEnum.REJECTED, ResumeStateEnum.WITHDRAWN),
+            ResumeStateEnum.INTERVIEW_SCHEDULED,
+            Set.of(ResumeStateEnum.INTERVIEWED, ResumeStateEnum.REJECTED, ResumeStateEnum.WITHDRAWN),
+            ResumeStateEnum.INTERVIEWED,
+            Set.of(ResumeStateEnum.OFFERED, ResumeStateEnum.REJECTED, ResumeStateEnum.WITHDRAWN),
+            ResumeStateEnum.OFFERED, Set.of(ResumeStateEnum.HIRED, ResumeStateEnum.REJECTED, ResumeStateEnum.WITHDRAWN),
+            ResumeStateEnum.APPROVED, Set.of(ResumeStateEnum.HIRED, ResumeStateEnum.REJECTED),
+            ResumeStateEnum.HIRED, Set.of(),
+            ResumeStateEnum.REJECTED, Set.of(),
+            ResumeStateEnum.WITHDRAWN, Set.of());
+
+    public boolean canTransition(ResumeStateEnum current, ResumeStateEnum target) {
+        if (target == null || current == target) {
+            return true;
+        }
+        if (current == null) {
+            return target == ResumeStateEnum.PENDING;
+        }
+
+        return VALID_TRANSITIONS.getOrDefault(current, Set.of()).contains(target);
+    }
 
     public Optional<Resume> fetchById(long id) {
         return this.resumeRepository.findById(id);
@@ -44,13 +77,13 @@ public class ResumeService {
 
         try {
             UserDTO user = userFetchService.fetchUser(resume.getUserId());
-            if (user == null) {
+            if (user == null || user.getId() == null) {
                 log.error("User with id {} not found", resume.getUserId());
                 return false;
             }
 
             JobDTO job = jobFetchService.fetchJob(resume.getJobId());
-            if (job == null) {
+            if (job == null || job.getId() == null) {
                 log.error("Job with id {} not found", resume.getJobId());
                 return false;
             }
@@ -79,7 +112,6 @@ public class ResumeService {
     private void publishResumeSubmittedEvent(Resume resume) {
         try {
             // Fetch additional info for the event
-            UserDTO user = resume.getUserId() != null ? userFetchService.fetchUser(resume.getUserId()) : null;
             JobDTO job = resume.getJobId() != null ? jobFetchService.fetchJob(resume.getJobId()) : null;
 
             ResumeApplicationEvent event = ResumeApplicationEvent.builder()
@@ -89,7 +121,8 @@ public class ResumeService {
                     .companyId(job != null && job.getCompany() != null ? job.getCompany().getId() : null)
                     .userEmail(resume.getEmail())
                     .jobName(job != null ? job.getName() : "Unknown Job")
-                    .companyName(job != null && job.getCompany() != null ? job.getCompany().getName() : "Unknown Company")
+                    .companyName(
+                            job != null && job.getCompany() != null ? job.getCompany().getName() : "Unknown Company")
                     .resumeUrl(resume.getUrl())
                     .build();
 
@@ -109,15 +142,27 @@ public class ResumeService {
         }
 
         ResUpdateResumeDTO res = new ResUpdateResumeDTO();
+        res.setId(resume.getId());
+        res.setStatus(resume.getStatus());
         res.setUpdatedAt(resume.getUpdatedAt());
         res.setUpdatedBy(resume.getUpdatedBy());
+        res.setRating(resume.getRating());
+        res.setNotes(resume.getNotes());
+        res.setReviewedBy(resume.getReviewedBy());
+        res.setReviewedAt(resume.getReviewedAt());
+        res.setInterviewDateTime(resume.getInterviewDateTime());
+        res.setInterviewer(resume.getInterviewer());
+        res.setMeetingType(resume.getMeetingType());
+        res.setMeetingLink(resume.getMeetingLink());
+        res.setMeetingLocation(resume.getMeetingLocation());
+        res.setInterviewNote(resume.getInterviewNote());
+        res.setInterviewResult(resume.getInterviewResult());
 
         return res;
     }
 
     private void publishResumeStatusChangeEvent(Resume resume) {
         try {
-            UserDTO user = resume.getUserId() != null ? userFetchService.fetchUser(resume.getUserId()) : null;
             JobDTO job = resume.getJobId() != null ? jobFetchService.fetchJob(resume.getJobId()) : null;
 
             ResumeApplicationEvent.EventType eventType = switch (resume.getStatus()) {
@@ -135,7 +180,8 @@ public class ResumeService {
                         .companyId(job != null && job.getCompany() != null ? job.getCompany().getId() : null)
                         .userEmail(resume.getEmail())
                         .jobName(job != null ? job.getName() : "Unknown Job")
-                        .companyName(job != null && job.getCompany() != null ? job.getCompany().getName() : "Unknown Company")
+                        .companyName(job != null && job.getCompany() != null ? job.getCompany().getName()
+                                : "Unknown Company")
                         .resumeUrl(resume.getUrl())
                         .build();
 
@@ -160,8 +206,20 @@ public class ResumeService {
         res.setUpdatedAt(resume.getUpdatedAt());
         res.setCreatedBy(resume.getCreatedBy());
         res.setUpdatedBy(resume.getUpdatedBy());
+        res.setRating(resume.getRating());
+        res.setNotes(resume.getNotes());
+        res.setReviewedBy(resume.getReviewedBy());
+        res.setReviewedAt(resume.getReviewedAt());
+        res.setInterviewDateTime(resume.getInterviewDateTime());
+        res.setInterviewer(resume.getInterviewer());
+        res.setMeetingType(resume.getMeetingType());
+        res.setMeetingLink(resume.getMeetingLink());
+        res.setMeetingLocation(resume.getMeetingLocation());
+        res.setInterviewNote(resume.getInterviewNote());
+        res.setInterviewResult(resume.getInterviewResult());
 
-        // In microservices, we need to fetch user and job info via inter-service communication
+        // In microservices, we need to fetch user and job info via inter-service
+        // communication
         // For now, just set basic info with IDs
         if (resume.getUserId() != null) {
             res.setUser(new ResFetchResumeDTO.UserResume(resume.getUserId(), "User #" + resume.getUserId()));
@@ -194,12 +252,90 @@ public class ResumeService {
         return result;
     }
 
-    public ResultPaginationDTO fetchAllResumeByUser(Pageable pageable) {
-        // In microservices, filter by current user email
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
+    public Long getCurrentUserCompanyId() {
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) {
+            return null;
+        }
 
-        // For now, fetch all - should be filtered by email in real implementation
-        Page<Resume> pageResume = this.resumeRepository.findAll(pageable);
+        UserDTO currentUser = userFetchService.fetchUser(currentUserId);
+        if (currentUser == null || currentUser.getCompany() == null) {
+            return null;
+        }
+
+        return currentUser.getCompany().getId();
+    }
+
+    public boolean isResumeInCompany(Resume resume, Long companyId) {
+        if (resume == null || companyId == null || resume.getJobId() == null) {
+            return false;
+        }
+
+        JobDTO job = jobFetchService.fetchJob(resume.getJobId());
+        return job != null && job.getCompany() != null && companyId.equals(job.getCompany().getId());
+    }
+
+    public ResultPaginationDTO fetchAllResumeForCompany(Specification<Resume> spec, Pageable pageable, Long companyId) {
+        List<Resume> allResumes = this.resumeRepository.findAll(spec);
+        Map<Long, Long> jobCompanyCache = new HashMap<>();
+
+        List<Resume> scopedResumes = allResumes.stream().filter(resume -> {
+            if (resume.getJobId() == null) {
+                return false;
+            }
+
+            Long scopedCompanyId = jobCompanyCache.get(resume.getJobId());
+            if (scopedCompanyId == null) {
+                JobDTO job = jobFetchService.fetchJob(resume.getJobId());
+                if (job == null || job.getCompany() == null) {
+                    jobCompanyCache.put(resume.getJobId(), -1L);
+                    return false;
+                }
+                scopedCompanyId = job.getCompany().getId();
+                jobCompanyCache.put(resume.getJobId(), scopedCompanyId);
+            }
+
+            return companyId.equals(scopedCompanyId);
+        }).collect(Collectors.toList());
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, scopedResumes.size());
+
+        List<Resume> pagedResumes = fromIndex >= scopedResumes.size()
+                ? List.of()
+                : scopedResumes.subList(fromIndex, toIndex);
+
+        ResultPaginationDTO result = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageNumber + 1);
+        meta.setPageSize(pageSize);
+        meta.setTotal(scopedResumes.size());
+        meta.setPages(pageSize == 0 ? 0 : (int) Math.ceil((double) scopedResumes.size() / pageSize));
+
+        result.setMeta(meta);
+        result.setResult(pagedResumes.stream().map(this::getResume).collect(Collectors.toList()));
+
+        return result;
+    }
+
+    public ResultPaginationDTO fetchAllResumeByUser(Pageable pageable) {
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) {
+            ResultPaginationDTO emptyResult = new ResultPaginationDTO();
+            ResultPaginationDTO.Meta emptyMeta = new ResultPaginationDTO.Meta();
+            emptyMeta.setPage(pageable.getPageNumber() + 1);
+            emptyMeta.setPageSize(pageable.getPageSize());
+            emptyMeta.setPages(0);
+            emptyMeta.setTotal(0);
+            emptyResult.setMeta(emptyMeta);
+            emptyResult.setResult(List.of());
+            return emptyResult;
+        }
+
+        Page<Resume> pageResume = this.resumeRepository.findByUserId(currentUserId, pageable);
 
         ResultPaginationDTO result = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
@@ -221,4 +357,3 @@ public class ResumeService {
     }
 
 }
-

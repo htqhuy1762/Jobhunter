@@ -367,6 +367,17 @@ CREATE TABLE IF NOT EXISTS resumes (
     email VARCHAR(255) NOT NULL,
     url VARCHAR(500) NOT NULL,
     status VARCHAR(50) DEFAULT 'PENDING',
+    rating INTEGER,
+    notes TEXT,
+    reviewed_by BIGINT,
+    reviewed_at TIMESTAMP,
+    interview_date_time TIMESTAMP,
+    interviewer VARCHAR(255),
+    meeting_type VARCHAR(100),
+    meeting_link VARCHAR(500),
+    meeting_location VARCHAR(500),
+    interview_note TEXT,
+    interview_result VARCHAR(255),
     user_id BIGINT,
     job_id BIGINT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -374,6 +385,18 @@ CREATE TABLE IF NOT EXISTS resumes (
     created_by VARCHAR(255),
     updated_by VARCHAR(255)
 );
+
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS rating INTEGER;
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS reviewed_by BIGINT;
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS interview_date_time TIMESTAMP;
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS interviewer VARCHAR(255);
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS meeting_type VARCHAR(100);
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS meeting_link VARCHAR(500);
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS meeting_location VARCHAR(500);
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS interview_note TEXT;
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS interview_result VARCHAR(255);
 
 CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id);
 CREATE INDEX IF NOT EXISTS idx_resumes_job_id ON resumes(job_id);

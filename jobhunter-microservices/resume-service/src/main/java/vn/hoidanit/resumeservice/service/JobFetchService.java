@@ -7,6 +7,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.resumeservice.client.JobClient;
+import vn.hoidanit.resumeservice.domain.response.RestResponse;
 import vn.hoidanit.resumeservice.dto.JobDTO;
 
 /**
@@ -23,7 +24,8 @@ public class JobFetchService {
     @Retry(name = "jobService")
     public JobDTO fetchJob(Long jobId) {
         log.debug("Fetching job with id: {}", jobId);
-        return jobClient.getJobById(jobId);
+        RestResponse<JobDTO> response = jobClient.getJobById(jobId);
+        return response != null ? response.getData() : null;
     }
 
     public JobDTO fetchJobFallback(Long jobId, Throwable ex) {
@@ -32,4 +34,3 @@ public class JobFetchService {
         return null;
     }
 }
-

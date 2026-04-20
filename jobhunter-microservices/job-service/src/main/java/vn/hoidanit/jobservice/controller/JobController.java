@@ -28,6 +28,7 @@ import vn.hoidanit.jobservice.dto.ResJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
 import vn.hoidanit.jobservice.service.JobService;
+import vn.hoidanit.jobservice.util.SecurityUtil;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -38,6 +39,21 @@ public class JobController {
     @PostMapping("/jobs")
     @PreAuthorize("hasAnyAuthority('ROLE_HR', 'ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResCreateJobDTO>> create(@Valid @RequestBody Job job) {
+        if (SecurityUtil.hasRole("ROLE_HR") && !SecurityUtil.hasRole("ROLE_ADMIN")) {
+            Long currentCompanyId = this.jobService.getCurrentUserCompanyId();
+            if (currentCompanyId == null) {
+                return RestResponse.error(HttpStatus.FORBIDDEN,
+                        "Current HR account is not associated with any company");
+            }
+
+            if (job.getCompanyId() == null) {
+                job.setCompanyId(currentCompanyId);
+            } else if (!currentCompanyId.equals(job.getCompanyId())) {
+                return RestResponse.error(HttpStatus.FORBIDDEN,
+                        "You don't have permission to create jobs for another company");
+            }
+        }
+
         ResCreateJobDTO createdJob = this.jobService.create(job);
         return RestResponse.created(createdJob, "Create job successfully");
     }
@@ -48,6 +64,20 @@ public class JobController {
         Optional<Job> currentJob = this.jobService.fetchJobById(job.getId());
         if (!currentJob.isPresent()) {
             return ResponseEntity.notFound().build();
+        }
+
+        if (SecurityUtil.hasRole("ROLE_HR") && !SecurityUtil.hasRole("ROLE_ADMIN")) {
+            Long currentCompanyId = this.jobService.getCurrentUserCompanyId();
+            if (currentCompanyId == null || !this.jobService.isJobInCompany(currentJob.get(), currentCompanyId)) {
+                return RestResponse.error(HttpStatus.FORBIDDEN,
+                        "You don't have permission to update this job");
+            }
+
+            if (job.getCompanyId() != null && !currentCompanyId.equals(job.getCompanyId())) {
+                return RestResponse.error(HttpStatus.FORBIDDEN,
+                        "You can't move a job to another company");
+            }
+            job.setCompanyId(currentCompanyId);
         }
 
         ResUpdateJobDTO updatedJob = this.jobService.update(job, currentJob.get());
@@ -62,12 +92,33 @@ public class JobController {
             return ResponseEntity.notFound().build();
         }
 
+        if (SecurityUtil.hasRole("ROLE_HR") && !SecurityUtil.hasRole("ROLE_ADMIN")) {
+            Long currentCompanyId = this.jobService.getCurrentUserCompanyId();
+            if (currentCompanyId == null || !this.jobService.isJobInCompany(currentJob.get(), currentCompanyId)) {
+                return RestResponse.error(HttpStatus.FORBIDDEN,
+                        "You don't have permission to delete this job");
+            }
+        }
+
         this.jobService.delete(id);
         return RestResponse.ok(null, "Delete job successfully");
     }
 
     @GetMapping("/jobs/{id}")
     public ResponseEntity<RestResponse<ResJobDTO>> getJobById(@PathVariable("id") long id) {
+        Optional<Job> currentJob = this.jobService.fetchJobById(id);
+        if (currentJob.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (SecurityUtil.hasRole("ROLE_HR") && !SecurityUtil.hasRole("ROLE_ADMIN")) {
+            Long currentCompanyId = this.jobService.getCurrentUserCompanyId();
+            if (currentCompanyId == null || !this.jobService.isJobInCompany(currentJob.get(), currentCompanyId)) {
+                return RestResponse.error(HttpStatus.FORBIDDEN,
+                        "You don't have permission to view this job");
+            }
+        }
+
         ResJobDTO jobDTO = this.jobService.fetchJobByIdWithCompany(id);
         if (jobDTO == null) {
             return ResponseEntity.notFound().build();
@@ -91,7 +142,17 @@ public class JobController {
             @Filter Specification<Job> spec,
             @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
 
-        ResultPaginationDTO result = this.jobService.fetchAll(spec, pageable);
+        ResultPaginationDTO result;
+        if (SecurityUtil.hasRole("ROLE_HR") && !SecurityUtil.hasRole("ROLE_ADMIN")) {
+            Long currentCompanyId = this.jobService.getCurrentUserCompanyId();
+            if (currentCompanyId == null) {
+                return RestResponse.error(HttpStatus.FORBIDDEN,
+                        "Current HR account is not associated with any company");
+            }
+            result = this.jobService.fetchAllForCompany(spec, pageable, currentCompanyId);
+        } else {
+            result = this.jobService.fetchAll(spec, pageable);
+        }
         return RestResponse.ok(result, "Fetch jobs successfully");
     }
 }

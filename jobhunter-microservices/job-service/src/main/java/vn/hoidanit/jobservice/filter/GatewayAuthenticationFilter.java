@@ -15,7 +15,9 @@ import vn.hoidanit.jobservice.util.SignatureUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -55,11 +57,12 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
             try {
                 long timestamp = Long.parseLong(gatewayTimestamp);
-                
+
                 // Check timestamp to prevent replay attacks
                 long currentTime = System.currentTimeMillis();
                 if (Math.abs(currentTime - timestamp) > MAX_TIMESTAMP_DIFF_MS) {
-                    log.warn("Request timestamp too old or too far in future: {} (current: {})", timestamp, currentTime);
+                    log.warn("Request timestamp too old or too far in future: {} (current: {})", timestamp,
+                            currentTime);
                     sendUnauthorizedResponse(response, "Request timestamp invalid");
                     return;
                 }
@@ -70,8 +73,12 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                     log.debug("Gateway signature validated for user: {}", userEmail);
 
                     List<SimpleGrantedAuthority> authorities = parseAuthorities(userRoles);
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(userEmail, null, authorities);
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userEmail, null, authorities);
+                    Map<String, Object> details = new HashMap<>();
+                    details.put("userId", userId);
+                    details.put("userEmail", userEmail);
+                    authentication.setDetails(details);
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -109,8 +116,7 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(String.format(
-            "{\"statusCode\":401,\"error\":\"Unauthorized\",\"message\":\"%s\"}", message
-        ));
+                "{\"statusCode\":401,\"error\":\"Unauthorized\",\"message\":\"%s\"}", message));
     }
 
     private void sendBadRequestResponse(HttpServletResponse response, String message) throws IOException {
@@ -118,8 +124,6 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(String.format(
-            "{\"statusCode\":400,\"error\":\"Bad Request\",\"message\":\"%s\"}", message
-        ));
+                "{\"statusCode\":400,\"error\":\"Bad Request\",\"message\":\"%s\"}", message));
     }
 }
-

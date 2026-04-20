@@ -25,6 +25,19 @@ public class ResFetchResumeDTO {
     private String createdBy;
     private String updatedBy;
 
+    private Integer rating;
+    private String notes;
+    private Long reviewedBy;
+    private Instant reviewedAt;
+
+    private Instant interviewDateTime;
+    private String interviewer;
+    private String meetingType;
+    private String meetingLink;
+    private String meetingLocation;
+    private String interviewNote;
+    private String interviewResult;
+
     private String companyName;
     private UserResume user;
     private JobResume job;
@@ -45,4 +58,3 @@ public class ResFetchResumeDTO {
         private String name;
     }
 }
-

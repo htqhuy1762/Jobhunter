@@ -8,8 +8,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -36,6 +34,28 @@ public class Resume {
 
     @Enumerated(EnumType.STRING)
     private ResumeStateEnum status;
+
+    private Integer rating;
+
+    private String notes;
+
+    private Long reviewedBy;
+
+    private Instant reviewedAt;
+
+    private Instant interviewDateTime;
+
+    private String interviewer;
+
+    private String meetingType;
+
+    private String meetingLink;
+
+    private String meetingLocation;
+
+    private String interviewNote;
+
+    private String interviewResult;
 
     private Instant createdAt;
     private Instant updatedAt;
@@ -66,4 +86,3 @@ public class Resume {
         this.updatedAt = Instant.now();
     }
 }
-

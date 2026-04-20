@@ -2,6 +2,8 @@ package vn.hoidanit.jobservice.service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -20,9 +22,11 @@ import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
 import vn.hoidanit.jobservice.dto.ResJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
+import vn.hoidanit.jobservice.dto.UserDTO;
 import vn.hoidanit.jobservice.kafka.producer.JobEventProducer;
 import vn.hoidanit.jobservice.repository.JobRepository;
 import vn.hoidanit.jobservice.repository.SkillRepository;
+import vn.hoidanit.jobservice.util.SecurityUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +36,9 @@ public class JobService {
     private final SkillRepository skillRepository;
     private final CompanyFetchService companyFetchService;
     private final JobEventProducer jobEventProducer;
+    private final UserFetchService userFetchService;
 
-    @CacheEvict(value = {"jobs", "jobs:details"}, allEntries = true)
+    @CacheEvict(value = { "jobs", "jobs:details" }, allEntries = true)
     public ResCreateJobDTO create(Job job) {
         attachSkillsToJob(job);
         Job savedJob = jobRepository.save(job);
@@ -56,7 +61,7 @@ public class JobService {
                 .orElse(null);
     }
 
-    @CacheEvict(value = {"jobs", "jobs:details"}, allEntries = true)
+    @CacheEvict(value = { "jobs", "jobs:details" }, allEntries = true)
     public ResUpdateJobDTO update(Job job, Job existingJob) {
         attachSkillsToJob(job);
         updateJobFields(existingJob, job);
@@ -64,7 +69,7 @@ public class JobService {
         return mapToUpdateDTO(savedJob);
     }
 
-    @CacheEvict(value = {"jobs", "jobs:details"}, allEntries = true)
+    @CacheEvict(value = { "jobs", "jobs:details" }, allEntries = true)
     public void delete(long id) {
         jobRepository.deleteById(id);
     }
@@ -77,6 +82,53 @@ public class JobService {
                 .collect(Collectors.toList());
 
         return buildPaginationResult(jobPage, jobDTOs, pageable);
+    }
+
+    public ResultPaginationDTO fetchAllForCompany(Specification<Job> spec, Pageable pageable, Long companyId) {
+        List<Job> allJobs = this.jobRepository.findAll(spec);
+        List<Job> scopedJobs = allJobs.stream()
+                .filter(job -> companyId.equals(job.getCompanyId()))
+                .collect(Collectors.toList());
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, scopedJobs.size());
+
+        List<Job> pagedJobs = fromIndex >= scopedJobs.size()
+                ? List.of()
+                : scopedJobs.subList(fromIndex, toIndex);
+
+        List<ResJobDTO> jobDTOs = pagedJobs.stream().map(this::convertToResJobDTO).collect(Collectors.toList());
+
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        meta.setPage(pageNumber + 1);
+        meta.setPageSize(pageSize);
+        meta.setTotal(scopedJobs.size());
+        meta.setPages(pageSize == 0 ? 0 : (int) Math.ceil((double) scopedJobs.size() / pageSize));
+
+        ResultPaginationDTO result = new ResultPaginationDTO();
+        result.setMeta(meta);
+        result.setResult(jobDTOs);
+        return result;
+    }
+
+    public Long getCurrentUserCompanyId() {
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) {
+            return null;
+        }
+
+        UserDTO currentUser = userFetchService.fetchUser(currentUserId);
+        if (currentUser == null || currentUser.getCompany() == null) {
+            return null;
+        }
+
+        return currentUser.getCompany().getId();
+    }
+
+    public boolean isJobInCompany(Job job, Long companyId) {
+        return job != null && companyId != null && companyId.equals(job.getCompanyId());
     }
 
     private void attachSkillsToJob(Job job) {
@@ -161,7 +213,7 @@ public class JobService {
         dto.setUpdatedAt(job.getUpdatedAt());
         dto.setCreatedBy(job.getCreatedBy());
         dto.setUpdatedBy(job.getUpdatedBy());
-        dto.setSkills(extractSkillInfos(job));  // Changed to return objects
+        dto.setSkills(extractSkillInfos(job)); // Changed to return objects
 
         if (job.getCompanyId() != null) {
             ResJobDTO.CompanyInfo companyInfo = companyFetchService.fetchCompany(job.getCompanyId());
@@ -202,4 +254,3 @@ public class JobService {
         return result;
     }
 }
-
