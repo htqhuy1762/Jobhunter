@@ -49,7 +49,6 @@ public class JobService {
         return mapToCreateDTO(savedJob);
     }
 
-    @Cacheable(value = "jobs", key = "#id")
     public Optional<Job> fetchJobById(long id) {
         return jobRepository.findById(id);
     }
