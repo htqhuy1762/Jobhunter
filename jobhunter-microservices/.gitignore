@@ -27,3 +27,6 @@ logs/
 # Docker
 docker-compose.override.yml
 
+# AI Agents & Skills tools
+.agents/
+skills-lock.json
