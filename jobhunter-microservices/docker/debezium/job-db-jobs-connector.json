@@ -1,0 +1,22 @@
+{
+  "name": "job-db-jobs-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "postgres",
+    "database.password": "postgres",
+    "database.dbname": "job_db",
+    "database.server.name": "job_db",
+    "topic.prefix": "job_db",
+    "slot.name": "job_db_jobs_slot",
+    "plugin.name": "pgoutput",
+    "publication.autocreate.mode": "filtered",
+    "table.include.list": "public.jobs",
+    "snapshot.mode": "always",
+    "decimal.handling.mode": "string",
+    "time.precision.mode": "adaptive_time_microseconds",
+    "tombstones.on.delete": "false"
+  }
+}
+

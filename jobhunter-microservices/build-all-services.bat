@@ -4,7 +4,7 @@ echo Building All Microservices
 echo ========================================
 echo.
 
-set "SERVICES=eureka-server api-gateway auth-service company-service job-service resume-service file-service notification-service"
+set "SERVICES=eureka-server api-gateway auth-service company-service job-service resume-service file-service notification-service search-service"
 set "FAILED_SERVICES="
 set "SUCCESS_COUNT=0"
 set "FAIL_COUNT=0"
@@ -41,7 +41,7 @@ echo.
 echo ========================================
 echo Build Summary
 echo ========================================
-echo Total Services: 8
+echo Total Services: 9
 echo Success: %SUCCESS_COUNT%
 echo Failed: %FAIL_COUNT%
 

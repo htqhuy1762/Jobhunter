@@ -19,6 +19,7 @@ This is the **microservices implementation** of JobHunter recruitment platform, 
 - ✅ 6 independent business microservices
 - ✅ Full Spring Cloud stack (Eureka, Gateway, OpenFeign, Config)
 - ✅ Event-driven with Kafka (3 topics, producer-consumer patterns)
+- ✅ CDC pipeline (Debezium -> Kafka -> Elasticsearch)
 - ✅ Complete observability stack (Zipkin, Prometheus, Grafana, Loki)
 - ✅ Database-per-service pattern with PostgreSQL
 - ✅ Resilience patterns (Circuit Breaker, Retry, Fallback)
@@ -54,6 +55,7 @@ Hệ thống JobHunter là RESTful API được xây dựng bằng Spring Boot, 
 - Object Storage - MinIO
 - Monitoring - Actuator + Prometheus + Zipkin
 - API Documentation - Swagger/OpenAPI 3.0
+- Search Engine - Elasticsearch (near real-time index)
 
 ---
 
@@ -69,6 +71,9 @@ Hệ thống JobHunter là RESTful API được xây dựng bằng Spring Boot, 
 | **Redis**         | 6379      | Caching & Rate Limiting                |
 | **Kafka**         | 9092      | Event streaming                        |
 | **Zookeeper**     | 2181      | Kafka coordination                     |
+| **Kafka Connect** | 8088      | Debezium CDC connectors                |
+| **Elasticsearch** | 9200      | Search index                           |
+| **Kibana**        | 5601      | Elasticsearch UI                        |
 | **MinIO**         | 9000/9001 | Object Storage (minioadmin/minioadmin) |
 | **Zipkin**        | 9411      | Distributed Tracing                    |
 | **Prometheus**    | 9090      | Metrics Collection                     |
@@ -86,6 +91,7 @@ Hệ thống JobHunter là RESTful API được xây dựng bằng Spring Boot, 
 | **Resume Service**       | 8084 | resume_db  | Resume/CV            | Producer            |
 | **File Service**         | 8085 | -          | File Upload/Download | -                   |
 | **Notification Service** | 8086 | -          | Email                | Consumer            |
+| **Search Service**       | 8087 | -          | Job Search API       | CDC Consumer        |
 
 ---
 
@@ -98,6 +104,18 @@ Hệ thống JobHunter là RESTful API được xây dựng bằng Spring Boot, 
 | **job-created**         | Job Service       | Notification Service | Thông báo job mới         |
 | **job-applications**    | Resume Service    | Job Service          | Thông báo ứng viên nộp CV |
 | **email-notifications** | Multiple Services | Notification Service | Email queue               |
+| **job_db.public.jobs**  | Debezium CDC      | Search Service       | Đồng bộ index jobs        |
+
+### CDC Search Pipeline
+
+```
+Job Service (PostgreSQL write)
+  -> Debezium (Kafka Connect)
+  -> Kafka topic: job_db.public.jobs
+  -> Search Service CDC consumer
+  -> Elasticsearch index: jobs
+  -> Search API: /api/v1/search/jobs
+```
 
 ### Communication Patterns
 
@@ -140,6 +158,9 @@ build-all-services.bat
 # Khởi động
 docker-compose up -d
 
+# Đăng ký Debezium connector cho job_db.jobs
+powershell -ExecutionPolicy Bypass -File .\scripts\register-job-cdc-connector.ps1
+
 # Kiểm tra
 docker-compose ps
 docker-compose logs -f
@@ -152,6 +173,8 @@ docker-compose logs -f
 | **Eureka**      | http://localhost:8761                 | -                     |
 | **API Gateway** | http://localhost:8080                 | -                     |
 | **Swagger UI**  | http://localhost:8080/swagger-ui.html | -                     |
+| **Search API**  | http://localhost:8080/api/v1/search/jobs?q=java | -          |
+| **Kibana**      | http://localhost:5601                 | -                     |
 | **Zipkin**      | http://localhost:9411                 | -                     |
 | **MinIO**       | http://localhost:9001                 | minioadmin/minioadmin |
 | **Grafana**     | http://localhost:3000                 | admin/admin           |
@@ -232,6 +255,12 @@ PUT    /api/v1/jobs               # HR
 DELETE /api/v1/jobs/{id}          # HR
 GET    /api/v1/skills
 POST   /api/v1/skills             # Admin
+```
+
+### Search
+
+```
+GET    /api/v1/search/jobs
 ```
 
 ### Resumes

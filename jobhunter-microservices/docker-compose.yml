@@ -7,6 +7,14 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: jobhunter-postgres
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -83,6 +91,79 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+
+  # Elasticsearch for search indexing/query
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    container_name: jobhunter-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # Kibana UI for Elasticsearch exploration
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.14.3
+    container_name: jobhunter-kibana
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # Kafka Connect with Debezium Postgres connector
+  kafka-connect:
+    image: debezium/connect:2.7.3.Final
+    container_name: jobhunter-kafka-connect
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8088:8083"
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:29092
+      - GROUP_ID=jobhunter-connect-cluster
+      - CONFIG_STORAGE_TOPIC=jobhunter_connect_configs
+      - OFFSET_STORAGE_TOPIC=jobhunter_connect_offsets
+      - STATUS_STORAGE_TOPIC=jobhunter_connect_status
+      - CONFIG_STORAGE_REPLICATION_FACTOR=1
+      - OFFSET_STORAGE_REPLICATION_FACTOR=1
+      - STATUS_STORAGE_REPLICATION_FACTOR=1
+      - KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - KEY_CONVERTER_SCHEMAS_ENABLE=false
+      - VALUE_CONVERTER_SCHEMAS_ENABLE=false
+      - CONNECT_REST_ADVERTISED_HOST_NAME=kafka-connect
+      - CONNECT_PLUGIN_PATH=/kafka/connect
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/connectors"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   # Kafka UI for monitoring and management
 #  kafka-ui:
@@ -437,6 +518,29 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME:-}
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
 
+  # Search Service (Elasticsearch query API + CDC consumer)
+  search-service:
+    build:
+      context: ./search-service
+      dockerfile: Dockerfile
+    container_name: search-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - CDC_JOBS_TOPIC=job_db.public.jobs
+
 networks:
   microservices-network:
     driver: bridge
@@ -446,6 +550,7 @@ volumes:
   redis_data:
   kafka_data:
   minio_data:
+  elasticsearch_data:
   file_storage:
   prometheus_data:
   loki_data:
