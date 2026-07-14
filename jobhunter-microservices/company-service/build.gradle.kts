@@ -38,11 +38,10 @@ dependencies {
     implementation("org.springframework.security:spring-security-oauth2-resource-server")
     implementation("org.springframework.security:spring-security-oauth2-jose")
 
-    // Resilience4j for Circuit Breaker, Rate Limiter, Retry
+    // Resilience4j for Circuit Breaker, Retry, Bulkhead
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
     implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.1.0")
-    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
     implementation("io.github.resilience4j:resilience4j-retry:2.1.0")
     implementation("io.github.resilience4j:resilience4j-bulkhead:2.1.0")
 
