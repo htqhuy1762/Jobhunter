@@ -49,8 +49,12 @@ public class SignatureUtil {
         );
     }
 
-    public static String createSignatureData(String userId, String email, long timestamp) {
-        return userId + ":" + email + ":" + timestamp;
+    public static String createSignatureData(String userId, String email, String roles, long timestamp) {
+        return String.format("%s:%s:%s:%d",
+            userId != null ? userId : "",
+            email != null ? email : "",
+            roles != null ? roles : "",
+            timestamp);
     }
 }
 

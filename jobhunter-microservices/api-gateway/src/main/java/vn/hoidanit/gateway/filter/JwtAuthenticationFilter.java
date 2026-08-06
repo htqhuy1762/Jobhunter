@@ -131,7 +131,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     private ServerHttpRequest buildAuthenticatedRequest(ServerHttpRequest request, String userId, String email,
             String roles) {
         long timestamp = System.currentTimeMillis();
-        String signatureData = SignatureUtil.createSignatureData(userId, email, timestamp);
+        String signatureData = SignatureUtil.createSignatureData(userId, email, roles, timestamp);
         String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
         // Pass through the original Authorization header for downstream JWT validation

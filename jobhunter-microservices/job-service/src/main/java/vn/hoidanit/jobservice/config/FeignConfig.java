@@ -41,7 +41,7 @@ public class FeignConfig {
                 if (userId != null && userEmail != null) {
                     long timestamp = System.currentTimeMillis();
                     String signatureData = SignatureUtil.createSignatureData(String.valueOf(userId), userEmail,
-                            timestamp);
+                            roles, timestamp);
                     String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
                     template.header("X-Gateway-Signature", signature);
@@ -54,7 +54,7 @@ public class FeignConfig {
                     log.debug("Added signed gateway headers to Feign call: {} {}", template.method(), template.url());
                 } else {
                     long timestamp = System.currentTimeMillis();
-                    String signatureData = SignatureUtil.createSignatureData("0", "system", timestamp);
+                    String signatureData = SignatureUtil.createSignatureData("0", "system", null, timestamp);
                     String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
                     template.header("X-Gateway-Signature", signature);

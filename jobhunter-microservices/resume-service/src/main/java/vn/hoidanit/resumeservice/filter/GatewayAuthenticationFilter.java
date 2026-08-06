@@ -29,13 +29,14 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
     private static final String HEADER_USER_ID = "X-User-Id";
     private static final String HEADER_USER_EMAIL = "X-User-Email";
     private static final String HEADER_USER_ROLES = "X-User-Roles";
-    private static final long MAX_TIMESTAMP_DIFF_MS = 300000;
-
     @Value("${gateway.signature.secret}")
     private String gatewaySignatureSecret;
 
     @Value("${gateway.signature.enabled:true}")
     private boolean gatewaySignatureEnabled;
+
+    @Value("${gateway.signature.timestamp-tolerance-seconds:60}")
+    private long timestampToleranceSeconds;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -54,14 +55,14 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                 long timestamp = Long.parseLong(gatewayTimestamp);
                 long currentTime = System.currentTimeMillis();
 
-                if (Math.abs(currentTime - timestamp) > MAX_TIMESTAMP_DIFF_MS) {
+                if (Math.abs(currentTime - timestamp) > timestampToleranceSeconds * 1000L) {
                     log.warn("Request timestamp too old or too far in future: {} (current: {})", timestamp,
                             currentTime);
                     sendUnauthorizedResponse(response, "Request timestamp invalid");
                     return;
                 }
 
-                String signatureData = SignatureUtil.createSignatureData(userId, userEmail, timestamp);
+                String signatureData = SignatureUtil.createSignatureData(userId, userEmail, userRoles, timestamp);
 
                 if (SignatureUtil.verifySignature(signatureData, gatewaySignature, gatewaySignatureSecret)) {
                     log.debug("Gateway signature validated for user: {}", userEmail);

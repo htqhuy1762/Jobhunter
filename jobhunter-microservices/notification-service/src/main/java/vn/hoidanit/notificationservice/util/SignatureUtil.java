@@ -14,10 +14,11 @@ public class SignatureUtil {
         throw new UnsupportedOperationException("Utility class");
     }
 
-    public static String createSignatureData(String userId, String userEmail, long timestamp) {
-        return String.format("%s:%s:%d",
+    public static String createSignatureData(String userId, String userEmail, String userRoles, long timestamp) {
+        return String.format("%s:%s:%s:%d",
             userId != null ? userId : "",
             userEmail != null ? userEmail : "",
+            userRoles != null ? userRoles : "",
             timestamp);
     }
 

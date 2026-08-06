@@ -34,6 +34,9 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
     @Value("${gateway.signature.enabled:true}")
     private boolean gatewaySignatureEnabled;
 
+    @Value("${gateway.signature.timestamp-tolerance-seconds:60}")
+    private long timestampToleranceSeconds;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -49,7 +52,18 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
             try {
                 long timestamp = Long.parseLong(gatewayTimestamp);
-                String signatureData = SignatureUtil.createSignatureData(userId, userEmail, timestamp);
+                long currentTime = System.currentTimeMillis();
+
+                if (Math.abs(currentTime - timestamp) > timestampToleranceSeconds * 1000L) {
+                    log.warn("Request timestamp too old or too far in future: {} (current: {})", timestamp,
+                            currentTime);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Request timestamp expired\"}");
+                    return;
+                }
+
+                String signatureData = SignatureUtil.createSignatureData(userId, userEmail, userRoles, timestamp);
 
                 if (SignatureUtil.verifySignature(signatureData, gatewaySignature, gatewaySignatureSecret)) {
                     log.debug("Gateway signature validated for user: {}", userEmail);

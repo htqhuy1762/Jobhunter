@@ -45,6 +45,7 @@ public class FeignConfig {
                     String signatureData = SignatureUtil.createSignatureData(
                             String.valueOf(userId),
                             userEmail,
+                            roles,
                             timestamp);
                     String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
@@ -66,7 +67,7 @@ public class FeignConfig {
 
                     // For system calls without user context, use system credentials
                     long timestamp = System.currentTimeMillis();
-                    String signatureData = SignatureUtil.createSignatureData("0", "system", timestamp);
+                    String signatureData = SignatureUtil.createSignatureData("0", "system", null, timestamp);
                     String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
                     template.header("X-Gateway-Signature", signature);
