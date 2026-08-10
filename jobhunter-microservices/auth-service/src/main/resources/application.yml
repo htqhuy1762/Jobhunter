@@ -95,21 +95,17 @@ hoidanit:
 
 # Resilience4j Configuration for Rate Limiting
 # Only protect sensitive operations: login/register (high risk for brute force attacks)
-resilience4j:
-    ratelimiter:
-        instances:
-            login:
-                limitForPeriod: 5           # Prevent brute force
-                limitRefreshPeriod: 1m
-                timeoutDuration: 0s
-            register:
-                limitForPeriod: 3           # Prevent spam signup
-                limitRefreshPeriod: 1m
-                timeoutDuration: 0s
-            changePassword:
-                limitForPeriod: 5           # Sensitive operation, prevent abuse
-                limitRefreshPeriod: 1m
-                timeoutDuration: 0s
+bucket4j:
+    instances:
+        login:
+            capacity: 5                    # Prevent brute force
+            refill-period: 1m
+        register:
+            capacity: 3                    # Prevent spam signup
+            refill-period: 1m
+        changePassword:
+            capacity: 5                    # Sensitive operation, prevent abuse
+            refill-period: 1m
 
 # CORS Configuration
 app:

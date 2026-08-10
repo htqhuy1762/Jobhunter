@@ -7,10 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 import vn.hoidanit.notificationservice.annotation.RateLimit;
+import vn.hoidanit.notificationservice.exception.RateLimitExceededException;
 import vn.hoidanit.notificationservice.util.SecurityUtil;
 
 /**
@@ -42,10 +41,8 @@ public class RateLimitAspect {
             String userEmail = SecurityUtil.getCurrentUserRoles().orElse("anonymous");
             log.warn("Rate limit exceeded for user: {} on {}", userEmail, rateLimiterName);
 
-            throw new ResponseStatusException(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    "Rate limit exceeded. Please try again later."
-            );
+            throw new RateLimitExceededException(
+                    "Rate limit exceeded for '" + rateLimiterName + "'. Please try again later.");
         }
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+import vn.hoidanit.notificationservice.annotation.RateLimit;
 
 import java.util.Map;
 
@@ -23,6 +24,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
+    @RateLimit(name = "sendEmail")
     @CircuitBreaker(name = "emailService", fallbackMethod = "sendSimpleEmailFallback")
     @Retry(name = "emailService")
     public void sendSimpleEmail(String to, String subject, String text) {
@@ -50,6 +52,7 @@ public class EmailService {
         // or send notification to monitoring system
     }
 
+    @RateLimit(name = "sendEmail")
     @CircuitBreaker(name = "emailService", fallbackMethod = "sendHtmlEmailFallback")
     @Retry(name = "emailService")
     public void sendHtmlEmail(String to, String subject, String templateName, Map<String, Object> variables) {

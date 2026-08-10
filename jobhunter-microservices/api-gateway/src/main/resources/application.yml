@@ -75,6 +75,11 @@ spring:
                       - Path=/api/v1/auth/logout
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Auth Service - Protected endpoints (users, roles, permissions only)
                 - id: auth-service-protected
@@ -83,6 +88,11 @@ spring:
                       - Path=/api/v1/users/**,/api/v1/roles/**,/api/v1/permissions/**
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Auth Service - Account endpoints (require JWT)
                 - id: auth-service-account
@@ -91,6 +101,11 @@ spring:
                       - Path=/api/v1/auth/account,/api/v1/auth/change-password
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Company Service - Public (GET only)
                 - id: company-service-public
@@ -107,6 +122,11 @@ spring:
                       - Method=POST,PUT,DELETE
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Subscriber Service - Public (POST to subscribe)
                 - id: subscriber-service-public
@@ -122,6 +142,11 @@ spring:
                       - Path=/api/v1/subscribers/**
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Job Service - GET with Authorization header (inject user context)
                 - id: job-service-get-authenticated
@@ -132,6 +157,11 @@ spring:
                       - Header=Authorization, Bearer .*
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Job Service - Public (GET only, no auth header)
                 - id: job-service-public
@@ -148,6 +178,11 @@ spring:
                       - Method=POST,PUT,DELETE
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Resume Service
                 - id: resume-service
@@ -156,6 +191,11 @@ spring:
                       - Path=/api/v1/resumes/**
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # File Service - Upload (Protected)
                 - id: file-service-upload
@@ -165,6 +205,11 @@ spring:
                       - Method=POST
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # File Service - Download (Protected)
                 - id: file-service-download
@@ -174,6 +219,11 @@ spring:
                       - Method=GET
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # File Service - Static Files (Public - for serving images like company logos)
                 - id: file-service-static
@@ -188,6 +238,11 @@ spring:
                       - Path=/api/v1/emails/**
                   filters:
                       - JwtAuthenticationFilter
+                      - name: RequestRateLimiter
+                        args:
+                            redis-rate-limiter.replenishRate: 20
+                            redis-rate-limiter.burstCapacity: 40
+                            key-resolver: '#{@userKeyResolver}'
 
                 # Search Service - Public (GET only)
                 - id: search-service-public
@@ -199,6 +254,11 @@ spring:
             default-filters:
                 - AddRequestHeader=X-Gateway-Version, 1.0
                 - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+                - name: RequestRateLimiter
+                  args:
+                      redis-rate-limiter.replenishRate: 50
+                      redis-rate-limiter.burstCapacity: 100
+                      key-resolver: '#{@ipKeyResolver}'
 
     data:
         redis:

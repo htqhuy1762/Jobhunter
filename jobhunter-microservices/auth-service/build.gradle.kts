@@ -39,10 +39,10 @@ dependencies {
     // Kafka for job alerts
     implementation("org.springframework.kafka:spring-kafka")
 
-    // Resilience4j for Rate Limiting
+    // Bucket4j for distributed rate limiting (backed by Redis, shared across instances)
     implementation("org.springframework.boot:spring-boot-starter-aop")
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
-    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
+    implementation("com.bucket4j:bucket4j-redis:8.10.1")
 
     // Spring Filter for dynamic querying
     implementation("com.turkraft.springfilter:jpa:3.1.7")
