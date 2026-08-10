@@ -104,8 +104,11 @@ resilience4j:
                 waitDurationInOpenState: 5s
                 failureRateThreshold: 50
                 eventConsumerBufferSize: 10
+                # feign.FeignException.FeignClientException (4xx, e.g. 404 for a deleted
+                # job) is intentionally NOT recorded - a valid business response, not an
+                # infra failure; must not trip the breaker or be retried.
                 recordExceptions:
-                    - feign.FeignException
+                    - feign.FeignException.FeignServerException
                     - feign.RetryableException
                     - java.net.ConnectException
                     - java.io.IOException
@@ -119,7 +122,7 @@ resilience4j:
                 failureRateThreshold: 50
                 eventConsumerBufferSize: 10
                 recordExceptions:
-                    - feign.FeignException
+                    - feign.FeignException.FeignServerException
                     - feign.RetryableException
                     - java.net.ConnectException
                     - java.io.IOException
@@ -131,7 +134,7 @@ resilience4j:
                 enableExponentialBackoff: true
                 exponentialBackoffMultiplier: 2
                 retryExceptions:
-                    - feign.FeignException
+                    - feign.FeignException.FeignServerException
                     - feign.RetryableException
                     - java.net.ConnectException
                     - java.io.IOException
@@ -141,16 +144,14 @@ resilience4j:
                 enableExponentialBackoff: true
                 exponentialBackoffMultiplier: 2
                 retryExceptions:
-                    - feign.FeignException
+                    - feign.FeignException.FeignServerException
                     - feign.RetryableException
                     - java.net.ConnectException
                     - java.io.IOException
-    timelimiter:
-        instances:
-            jobService:
-                timeoutDuration: 3s
-            userService:
-                timeoutDuration: 3s
+                # timelimiter intentionally omitted: @TimeLimiter requires the annotated
+                # method to return CompletableFuture/reactive; fetchJob()/fetchUser() are
+                # synchronous, so a resilience4j.timelimiter config here would be dead -
+                # the per-call bound is Feign's connectTimeout/readTimeout above.
 
 # CORS Configuration
 app:

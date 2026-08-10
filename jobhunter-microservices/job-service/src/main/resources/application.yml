@@ -124,8 +124,12 @@ resilience4j:
                 waitDurationInOpenState: 5s
                 failureRateThreshold: 50 # 50% of 3 calls = 2 failures will open circuit
                 eventConsumerBufferSize: 10
+                # NOTE: feign.FeignException.FeignClientException (4xx, e.g. 404 when a
+                # company was deleted) is intentionally NOT recorded - that's a valid
+                # business response, not an infra failure, and must not trip the breaker
+                # or be retried.
                 recordExceptions:
-                    - feign.FeignException
+                    - feign.FeignException.FeignServerException
                     - feign.RetryableException
                     - java.net.ConnectException
                     - java.net.SocketTimeoutException
@@ -140,16 +144,15 @@ resilience4j:
                 enableExponentialBackoff: true
                 exponentialBackoffMultiplier: 2
                 retryExceptions:
-                    - feign.FeignException
+                    - feign.FeignException.FeignServerException
                     - feign.RetryableException
                     - java.net.ConnectException
                     - java.net.SocketTimeoutException
                     - java.io.IOException
-    timelimiter:
-        instances:
-            companyService:
-                timeoutDuration: 10s # Increase to allow retries: 1s + 2s + 4s + overhead = ~8s
-                cancelRunningFuture: true
+                    # timelimiter intentionally omitted: @TimeLimiter requires the annotated
+                    # method to return CompletableFuture/reactive; fetchCompany() is
+                    # synchronous, so a resilience4j.timelimiter config here would be dead -
+                    # the per-call bound is Feign's connectTimeout/readTimeout above.
 
 # CORS Configuration
 app:
